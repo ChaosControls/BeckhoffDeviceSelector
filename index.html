@@ -283,7 +283,7 @@ td input[type=number] { width: 84px; text-align: right; }
 
   <section class="notes">
     <p><strong>How the budget is counted.</strong> The coupler feeds the E-bus terminals to its right. An EL9410 counts as a fresh 2,000 mA for the terminals after it, and the coupler's leftover is not carried past it. A BK1250 starts a K-bus section for KL terminals, refreshed by a KL9400. EP boxes hang off the EtherCAT cable and draw no E-bus current. "Reserve" holds back a share of each supply.</p>
-    <p><strong>Current values.</strong> Draws are typical values from Beckhoff datasheets. Values marked <span class="verify">verify</span> are estimates for that product family. Edit any draw in the table, and compare against the E-Bus column in TwinCAT after scanning the real hardware.</p>
+    <p><strong>Current values.</strong> Draws and coupler supplies are the typical figures from each device's Beckhoff product page (checked November 2026). ES terminals use the matching EL value. Where a page gives no figure, the value is the median for that product family and is marked <span class="verify">verify</span>. Edit any draw in the table, and compare against the E-Bus column in TwinCAT after scanning the real hardware.</p>
   </section>
 </div>
 
@@ -340,510 +340,1195 @@ td input[type=number] { width: 84px; text-align: right; }
 // ================= catalog =================
 // code|description|typical bus draw mA|~ = estimate (shown as "verify")
 const RAW_DEVICES = `
-EL1002|2-ch digital input 24 V DC, 3 ms|90
-EL1004|4-ch digital input 24 V DC, 3 ms|90
-EL1008|8-ch digital input 24 V DC, 3 ms|90
-EL1012|2-ch digital input 24 V DC, 10 µs|90|~
-EL1014|4-ch digital input 24 V DC, 10 µs|90|~
-EL1018|8-ch digital input 24 V DC, 10 µs|90
-EL1024|4-ch digital input 24 V DC, type 2 sensors|90|~
-EL1034|4-ch digital input 24 V DC, potential-free contacts|90|~
-EL1052|2-ch digital input 24 V DC, 3 ms, sensor supply|90|~
-EL1054|4-ch digital input 24 V DC, 3 ms, sensor supply|90|~
-EL1084|4-ch digital input 24 V DC, ground switching|90|~
-EL1088|8-ch digital input 24 V DC, ground switching|90|~
-EL1094|4-ch digital input 24 V DC, ground switching, 10 µs|90|~
-EL1098|8-ch digital input 24 V DC, ground switching, 10 µs|90|~
-EL1104|4-ch digital input 24 V DC, 3 ms, sensor supply|90|~
-EL1114|4-ch digital input 24 V DC, 10 µs, sensor supply|90|~
-EL1124|4-ch digital input 5 V DC|90|~
-EL1134|4-ch digital input 48 V DC|90|~
-EL1144|4-ch digital input 12 V DC|90|~
-EL1202|2-ch digital input 24 V DC, 1 µs|100|~
-EL1252|2-ch digital input 24 V DC, timestamp|110|~
-EL1254|4-ch digital input 24 V DC, timestamp|110|~
-EL1258|8-ch digital input 24 V DC, multi-timestamp|110|~
-EL1262|2-ch digital input 24 V DC, oversampling|110|~
-EL1382|2-ch digital input, thermistor|90|~
-EL1502|2-ch up/down counter 24 V DC|100|~
-EL1512|2-ch counter 24 V DC, 1 kHz|100|~
-EL1702|2-ch digital input 120/230 V AC|90|~
-EL1712|2-ch digital input 120 V AC/DC|90|~
-EL1722|2-ch digital input 120/230 V AC, no power contacts|90|~
-EL1804|4-ch digital input 24 V DC, 3 ms, 3-wire|90|~
-EL1808|8-ch digital input 24 V DC, 3 ms, 2-wire|90|~
-EL1809|16-ch digital input 24 V DC, 3 ms|100
-EL1814|4-ch digital input 24 V DC, 10 µs, 3-wire|90|~
-EL1819|16-ch digital input 24 V DC, 10 µs|100
-EL1859|8-ch digital input + 8-ch digital output 24 V DC|130|~
-EL1862|16-ch digital input 24 V DC, flat-ribbon connector|130|~
-EL1872|16-ch digital input 24 V DC, flat-ribbon connector, 10 µs|130|~
-EL1889|16-ch digital input 24 V DC, ground switching|100|~
-EL1904|TwinSAFE 4-ch safe digital input 24 V DC|220|~
-EL1918|TwinSAFE logic with 8 safe inputs|220|~
-EL2002|2-ch digital output 24 V DC, 0.5 A|100
-EL2004|4-ch digital output 24 V DC, 0.5 A|100
-EL2008|8-ch digital output 24 V DC, 0.5 A|110
-EL2022|2-ch digital output 24 V DC, 2 A|100|~
-EL2024|4-ch digital output 24 V DC, 2 A|100|~
-EL2032|2-ch digital output 24 V DC, 2 A, diagnostics|100|~
-EL2034|4-ch digital output 24 V DC, 2 A, diagnostics|100|~
-EL2042|2-ch digital output 24 V DC, 4 A|100|~
-EL2084|4-ch digital output 24 V DC, ground switching|100|~
-EL2088|8-ch digital output 24 V DC, ground switching|110|~
-EL2124|4-ch digital output 5 V DC|100|~
-EL2202|2-ch digital output 24 V DC, push-pull, timestamp|100|~
-EL2252|2-ch digital output 24 V DC, timestamp|100|~
-EL2262|2-ch digital output 24 V DC, oversampling|130|~
-EL2502|2-ch PWM output 24 V DC|110|~
-EL2512|2-ch PWM output 24 V DC, ground switching|110|~
-EL2521|1-ch pulse train output|210|~
-EL2535|2-ch pulse width current output|110|~
-EL2612|2-ch relay output 125 V AC/30 V DC, changeover|100|~
-EL2622|2-ch relay output 230 V AC/30 V DC, make contact|100|~
-EL2624|4-ch relay output 125 V AC/30 V DC, make contact|100|~
-EL2634|4-ch relay output 250 V AC/30 V DC, make contact|100|~
-EL2652|2-ch relay output 230 V AC, changeover|100|~
-EL2702|2-ch solid-state output 230 V AC|100|~
-EL2712|2-ch triac output 12…230 V AC|100|~
-EL2722|2-ch triac output 12…230 V AC, no power contacts|100|~
-EL2732|2-ch triac output 12…230 V AC, potential-free|100|~
-EL2808|8-ch digital output 24 V DC, 0.5 A, 2-wire|110|~
-EL2809|16-ch digital output 24 V DC, 0.5 A|140
-EL2872|16-ch digital output 24 V DC, flat-ribbon connector|140|~
-EL2889|16-ch digital output 24 V DC, ground switching|140|~
-EL2904|TwinSAFE 4-ch safe digital output 24 V DC|180|~
-EL3001|1-ch analog input ±10 V, single-ended, 12 bit|130|~
-EL3002|2-ch analog input ±10 V, single-ended, 12 bit|130
-EL3004|4-ch analog input ±10 V, single-ended, 12 bit|130
-EL3008|8-ch analog input ±10 V, single-ended, 12 bit|130
-EL3011|1-ch analog input 0…20 mA, differential, 12 bit|130|~
-EL3012|2-ch analog input 0…20 mA, differential, 12 bit|130|~
-EL3014|4-ch analog input 0…20 mA, differential, 12 bit|130|~
-EL3021|1-ch analog input 4…20 mA, differential, 12 bit|130|~
-EL3022|2-ch analog input 4…20 mA, differential, 12 bit|130|~
-EL3024|4-ch analog input 4…20 mA, differential, 12 bit|130|~
-EL3041|1-ch analog input 0…20 mA, single-ended, 12 bit|130|~
-EL3042|2-ch analog input 0…20 mA, single-ended, 12 bit|130|~
-EL3044|4-ch analog input 0…20 mA, single-ended, 12 bit|130|~
-EL3048|8-ch analog input 0…20 mA, single-ended, 12 bit|130|~
-EL3051|1-ch analog input 4…20 mA, single-ended, 12 bit|130|~
-EL3052|2-ch analog input 4…20 mA, single-ended, 12 bit|130
-EL3054|4-ch analog input 4…20 mA, single-ended, 12 bit|130
-EL3058|8-ch analog input 4…20 mA, single-ended, 12 bit|130|~
-EL3061|1-ch analog input 0…10 V, single-ended, 12 bit|130|~
-EL3062|2-ch analog input 0…10 V, single-ended, 12 bit|130
-EL3064|4-ch analog input 0…10 V, single-ended, 12 bit|130
-EL3068|8-ch analog input 0…10 V, single-ended, 12 bit|130|~
-EL3101|1-ch analog input ±10 V, differential, 16 bit|130|~
-EL3102|2-ch analog input ±10 V, differential, 16 bit|130
-EL3104|4-ch analog input ±10 V, differential, 16 bit|130
-EL3111|1-ch analog input 0…20 mA, differential, 16 bit|130|~
-EL3112|2-ch analog input 0…20 mA, differential, 16 bit|130|~
-EL3114|4-ch analog input 0…20 mA, differential, 16 bit|130|~
-EL3121|1-ch analog input 4…20 mA, differential, 16 bit|130|~
-EL3122|2-ch analog input 4…20 mA, differential, 16 bit|130|~
-EL3124|4-ch analog input 4…20 mA, differential, 16 bit|130|~
-EL3141|1-ch analog input 0…20 mA, single-ended, 16 bit|130|~
-EL3142|2-ch analog input 0…20 mA, single-ended, 16 bit|130|~
-EL3144|4-ch analog input 0…20 mA, single-ended, 16 bit|130|~
-EL3151|1-ch analog input 4…20 mA, single-ended, 16 bit|130|~
-EL3152|2-ch analog input 4…20 mA, single-ended, 16 bit|130|~
-EL3154|4-ch analog input 4…20 mA, single-ended, 16 bit|130|~
-EL3161|1-ch analog input 0…10 V, single-ended, 16 bit|130|~
-EL3162|2-ch analog input 0…10 V, single-ended, 16 bit|130|~
-EL3164|4-ch analog input 0…10 V, single-ended, 16 bit|130|~
-EL3172|2-ch analog input 0…2 V, differential, 16 bit|130|~
-EL3174|4-ch analog input, multi-function ±10 V / ±20 mA, 16 bit|130|~
-EL3182|2-ch analog input 4…20 mA, HART|130|~
-EL3201|1-ch RTD input PT100|190|~
-EL3202|2-ch RTD input PT100|190
-EL3204|4-ch RTD input PT100|190
-EL3208|8-ch RTD input PT100/PT1000|190|~
-EL3214|4-ch RTD input PT100, 3-wire|190|~
-EL3255|5-ch potentiometer input with sensor supply|130|~
-EL3311|1-ch thermocouple input|200|~
-EL3312|2-ch thermocouple input|200|~
-EL3314|4-ch thermocouple input|200|~
-EL3318|8-ch thermocouple input|200|~
-EL3351|1-ch resistor bridge input (strain gauge)|210|~
-EL3356|1-ch precision load cell input|210|~
-EL3403|3-phase power measurement, 500 V AC|120|~
-EL3413|3-phase power measurement, 690 V AC|120|~
-EL3423|3-phase energy measurement, economy|120|~
-EL3443|3-phase power measurement, extended|120|~
-EL3602|2-ch analog input ±10 V, 24 bit|190|~
-EL3632|2-ch IEPE condition monitoring input|200|~
-EL3681|Digital multimeter terminal|190|~
-EL3692|2-ch resistance measurement|190|~
-EL3702|2-ch analog input ±10 V, oversampling|200|~
-EL3751|1-ch multi-function analog input, 24 bit|200|~
-EL3773|Power monitoring oversampling terminal|200|~
-EL4001|1-ch analog output 0…10 V, 12 bit|160|~
-EL4002|2-ch analog output 0…10 V, 12 bit|175|~
-EL4004|4-ch analog output 0…10 V, 12 bit|210|~
-EL4008|8-ch analog output 0…10 V, 12 bit|220|~
-EL4011|1-ch analog output 0…20 mA, 12 bit|160|~
-EL4012|2-ch analog output 0…20 mA, 12 bit|175|~
-EL4014|4-ch analog output 0…20 mA, 12 bit|210|~
-EL4018|8-ch analog output 0…20 mA, 12 bit|220|~
-EL4021|1-ch analog output 4…20 mA, 12 bit|160|~
-EL4022|2-ch analog output 4…20 mA, 12 bit|175|~
-EL4024|4-ch analog output 4…20 mA, 12 bit|210|~
-EL4028|8-ch analog output 4…20 mA, 12 bit|220|~
-EL4031|1-ch analog output ±10 V, 12 bit|160|~
-EL4032|2-ch analog output ±10 V, 12 bit|175|~
-EL4034|4-ch analog output ±10 V, 12 bit|210|~
-EL4038|8-ch analog output ±10 V, 12 bit|220|~
-EL4102|2-ch analog output 0…10 V, 16 bit|175|~
-EL4104|4-ch analog output 0…10 V, 16 bit|210|~
-EL4112|2-ch analog output 0…20 mA, 16 bit|175|~
-EL4122|2-ch analog output 4…20 mA, 16 bit|175|~
-EL4132|2-ch analog output ±10 V, 16 bit|175|~
-EL4134|4-ch analog output ±10 V, 16 bit|210|~
-EL4732|2-ch analog output ±10 V, oversampling|220|~
-EL5001|1-ch SSI encoder interface|120|~
-EL5002|2-ch SSI encoder interface|130|~
-EL5021|1-ch SinCos encoder interface|130|~
-EL5032|2-ch EnDat 2.2 encoder interface|130|~
-EL5042|2-ch BiSS-C encoder interface|130|~
-EL5101|Incremental encoder interface, RS422|130
-EL5131|Incremental encoder interface with digital outputs|130|~
-EL5151|Incremental encoder interface, 24 V HTL|130|~
-EL5152|2-ch incremental encoder interface, 24 V HTL|130|~
-EL6001|Serial interface RS232|160|~
-EL6002|2-ch serial interface RS232|160|~
-EL6021|Serial interface RS422/RS485|160|~
-EL6022|2-ch serial interface RS422/RS485|160|~
-EL6070|License key terminal|100|~
-EL6080|Memory terminal|100|~
-EL6201|AS-Interface master|230|~
-EL6224|IO-Link master, 4 ports|130|~
-EL6601|Ethernet switch port, 1 port|160|~
-EL6614|Ethernet switch port, 4 ports|380|~
-EL6631|PROFINET RT controller|400|~
-EL6632|PROFINET IRT controller|400|~
-EL6652|EtherNet/IP scanner|400|~
-EL6688|IEEE 1588 PTP external sync interface|400|~
-EL6692|EtherCAT bridge terminal|400|~
-EL6695|EtherCAT bridge terminal, extended|400|~
-EL6720|Lightbus master|250|~
-EL6731|PROFIBUS DP master|300|~
-EL6751|CANopen master/slave|350
-EL6752|DeviceNet master/slave|350|~
-EL6851|DMX master|300|~
-EL6900|TwinSAFE logic|188|~
-EL6910|TwinSAFE logic, extended|188|~
-EL6930|TwinSAFE logic, PROFIsafe gateway|188|~
-EL7031|Stepper motor terminal 24 V, 1.5 A|120|~
-EL7037|Stepper motor terminal 24 V, 1.5 A, vector control|120|~
-EL7041|Stepper motor terminal 48 V, 5 A|140|~
-EL7047|Stepper motor terminal 48 V, 5 A, vector control|140|~
-EL7062|2-ch stepper motor terminal 48 V, 3.5 A|120|~
-EL7201|Servo motor terminal 50 V, 2.8 A|120|~
-EL7211|Servo motor terminal 50 V, 4.5 A|120|~
-EL7221|Servo motor terminal 50 V, 8 A|120|~
-EL7332|2-ch DC motor output 24 V, 1 A|120|~
-EL7342|2-ch DC motor output 50 V, 3.5 A|120|~
-EL7411|BLDC motor terminal 50 V, 4.5 A|120|~
-ELM3002|2-ch precision analog input ±30 V, 24 bit|220|~
-ELM3004|4-ch precision analog input ±30 V, 24 bit|220|~
-ELM3102|2-ch precision analog input ±20 mA, 24 bit|220|~
-ELM3104|4-ch precision analog input ±20 mA, 24 bit|220|~
-ELM3602|2-ch IEPE precision input, 24 bit|250|~
-ELM3704|4-ch universal precision input, 24 bit|250|~
-ELX1052|2-ch digital input NAMUR, Ex i|120|~
-ELX2002|2-ch digital output 24 V, Ex i|140|~
-ELX3152|2-ch analog input 4…20 mA, Ex i|160|~
-ELX3202|2-ch RTD input, Ex i|160|~
-ELX4181|1-ch analog output 0/4…20 mA, Ex i|160|~
-ELX9560|Power supply terminal for Ex i terminals|110|~
-EL9011|End cap for EtherCAT terminals|0
-EL9070|Shield terminal|0|~
-EL9080|Separation terminal|0|~
-EL9100|Potential feed terminal 24 V DC|0
-EL9110|Potential feed terminal 24 V DC, diagnostics|90|~
-EL9150|Potential feed terminal 230 V AC|0|~
-EL9160|Potential feed terminal 230 V AC, diagnostics|90|~
-EL9180|Potential distribution terminal|0|~
-EL9184|Potential distribution, 8 × 24 V / 8 × 0 V|0|~
-EL9185|Potential distribution, 4 × 24 V / 4 × 0 V|0|~
-EL9186|Potential distribution, 8 × 24 V|0|~
-EL9187|Potential distribution, 8 × 0 V|0|~
-EL9188|Potential distribution, 16 × 24 V|0|~
-EL9189|Potential distribution, 16 × 0 V|0|~
-EL9190|Potential feed terminal, any voltage up to 230 V|0|~
-EL9195|Shield terminal with feed|0|~
-EL9200|Potential feed terminal 24 V DC with fuse|0|~
-EL9210|Potential feed 24 V DC with fuse and diagnostics|90|~
-EL9227|2-ch electronic overcurrent protection 24 V DC|100|~
-EL9410|E-bus power supply terminal, refreshes 2,000 mA|0
-EL9505|Power supply terminal 5 V DC|110|~
-EL9508|Power supply terminal 8 V DC|110|~
-EL9510|Power supply terminal 10 V DC|110|~
-EL9512|Power supply terminal 12 V DC|110|~
-EL9515|Power supply terminal 15 V DC|110|~
-EL9560|Power supply terminal 24 V DC, isolated|110|~
-EL9576|Brake chopper terminal|100|~
-EK1110|EtherCAT extension, ends the E-bus, RJ45 out|130|~
-EK1122|EtherCAT junction, 2 ports RJ45|220
-EK1122-0080|EtherCAT junction, 2 ports, Fast Hot Connect|220|~
-EK1521|EtherCAT junction, 1 port multimode fiber|330|~
-EK1541|EtherCAT junction, 1 port POF|330|~
-BK1250|Compact coupler E-bus to K-bus, starts a KL section|280|~
-KL1002|2-ch digital input 24 V DC, 3 ms|3|~
-KL1012|2-ch digital input 24 V DC, 0.2 ms|3|~
-KL1104|4-ch digital input 24 V DC, 3 ms|5|~
-KL1114|4-ch digital input 24 V DC, 0.2 ms|5|~
-KL1124|4-ch digital input 5 V DC|5|~
-KL1184|4-ch digital input 24 V DC, ground switching|5|~
-KL1212|2-ch digital input 24 V DC, diagnostics|5|~
-KL1232|2-ch digital input 24 V DC, pulse extension|3|~
-KL1302|2-ch digital input 24 V DC, type 2|3|~
-KL1304|4-ch digital input 24 V DC, type 2|5|~
-KL1312|2-ch digital input 24 V DC, type 2, 0.2 ms|3|~
-KL1314|4-ch digital input 24 V DC, type 2, 0.2 ms|5|~
-KL1362|2-ch break-in alarm input|5|~
-KL1382|2-ch thermistor input|5|~
-KL1404|4-ch digital input 24 V DC, 2-wire|5|~
-KL1408|8-ch digital input 24 V DC, 3 ms|5|~
-KL1414|4-ch digital input 24 V DC, 0.2 ms, 2-wire|5|~
-KL1418|8-ch digital input 24 V DC, 0.2 ms|5|~
-KL1488|8-ch digital input 24 V DC, ground switching|5|~
-KL1498|8-ch digital input 24 V DC, ground switching, 0.2 ms|5|~
-KL1501|Up/down counter 24 V DC, 100 kHz|50|~
-KL1512|2-ch counter 24 V DC, 1 kHz|50|~
-KL1702|2-ch digital input 120/230 V AC|3|~
-KL1712|2-ch digital input 120 V AC/DC|3|~
-KL1722|2-ch digital input 120/230 V AC, no power contacts|3|~
-KL1808|8-ch digital input 24 V DC, 3 ms, HD|10|~
-KL1809|16-ch digital input 24 V DC, 3 ms, HD|20|~
-KL1819|16-ch digital input 24 V DC, 0.2 ms, HD|20|~
-KL1859|8-ch digital input + 8-ch digital output 24 V DC, HD|30|~
-KL1862|16-ch digital input 24 V DC, flat-ribbon connector|20|~
-KL1889|16-ch digital input 24 V DC, ground switching, HD|20|~
-KL1904|TwinSAFE 4-ch safe digital input|200|~
-KL2012|2-ch digital output 24 V DC, 0.5 A|7|~
-KL2022|2-ch digital output 24 V DC, 2 A|7|~
-KL2032|2-ch digital output 24 V DC, 0.5 A, diagnostics|7|~
-KL2114|4-ch digital output 24 V DC, 0.5 A|9|~
-KL2124|4-ch digital output 5 V DC|9|~
-KL2184|4-ch digital output 24 V DC, ground switching|9|~
-KL2404|4-ch digital output 24 V DC, 0.5 A|9|~
-KL2408|8-ch digital output 24 V DC, 0.5 A|18|~
-KL2424|4-ch digital output 24 V DC, 2 A|12|~
-KL2442|2-ch digital output 24 V DC, 4 A|9|~
-KL2488|8-ch digital output 24 V DC, ground switching|18|~
-KL2502|2-ch PWM output 24 V DC|40|~
-KL2512|2-ch PWM output 24 V DC, ground switching|40|~
-KL2521|1-ch pulse train output|50|~
-KL2531|Stepper motor terminal 24 V, 1.5 A|50|~
-KL2535|2-ch pulse width current output|40|~
-KL2541|Stepper motor terminal 48 V, 5 A|100|~
-KL2602|2-ch relay output 230 V AC, make contact|40|~
-KL2612|2-ch relay output 125 V AC, changeover|40|~
-KL2622|2-ch relay output 230 V AC, make contact, no power contacts|40|~
-KL2641|1-ch relay output 230 V AC, 16 A|40|~
-KL2652|2-ch relay output 230 V AC, changeover|40|~
-KL2701|1-ch solid-state load relay 230 V AC|20|~
-KL2702|2-ch solid-state output 230 V AC|20|~
-KL2712|2-ch triac output 12…230 V AC|20|~
-KL2722|2-ch triac output, no power contacts|20|~
-KL2732|2-ch triac output, potential-free|20|~
-KL2744|4-ch solid-state relay output|20|~
-KL2751|1-ch universal dimmer 230 V AC|50|~
-KL2791|1-ch AC motor speed controller|50|~
-KL2808|8-ch digital output 24 V DC, 0.5 A, HD|20|~
-KL2809|16-ch digital output 24 V DC, 0.5 A, HD|30|~
-KL2872|16-ch digital output 24 V DC, flat-ribbon connector|30|~
-KL2889|16-ch digital output 24 V DC, ground switching, HD|30|~
-KL2904|TwinSAFE 4-ch safe digital output|200|~
-KL3001|1-ch analog input ±10 V, differential|60|~
-KL3002|2-ch analog input ±10 V, differential|60|~
-KL3011|1-ch analog input 0…20 mA|60|~
-KL3012|2-ch analog input 0…20 mA|60|~
-KL3021|1-ch analog input 4…20 mA|60|~
-KL3022|2-ch analog input 4…20 mA|60|~
-KL3041|1-ch analog input 0…20 mA, single-ended|60|~
-KL3042|2-ch analog input 0…20 mA, single-ended|60|~
-KL3044|4-ch analog input 0…20 mA, single-ended|85|~
-KL3051|1-ch analog input 4…20 mA, single-ended|60|~
-KL3052|2-ch analog input 4…20 mA, single-ended|60|~
-KL3054|4-ch analog input 4…20 mA, single-ended|85|~
-KL3061|1-ch analog input 0…10 V, single-ended|60|~
-KL3062|2-ch analog input 0…10 V, single-ended|60|~
-KL3064|4-ch analog input 0…10 V, single-ended|85|~
-KL3102|2-ch analog input ±10 V, differential, 16 bit|60|~
-KL3112|2-ch analog input 0…20 mA, 16 bit|60|~
-KL3122|2-ch analog input 4…20 mA, 16 bit|60|~
-KL3132|2-ch analog input ±10 V, 16 bit|60|~
-KL3142|2-ch analog input 0…20 mA, single-ended, 16 bit|60|~
-KL3152|2-ch analog input 4…20 mA, single-ended, 16 bit|60|~
-KL3162|2-ch analog input 0…10 V, single-ended, 16 bit|60|~
-KL3172|2-ch analog input 0…2 V, 16 bit|60|~
-KL3182|2-ch analog input ±2 V, 16 bit|60|~
-KL3201|1-ch RTD input PT100|60|~
-KL3202|2-ch RTD input PT100|60|~
-KL3204|4-ch RTD input PT100|60|~
-KL3208|8-ch RTD input PT1000|60|~
-KL3222|2-ch precision RTD input|60|~
-KL3228|8-ch RTD input|60|~
-KL3302|2-ch thermocouple input|60|~
-KL3311|1-ch thermocouple input|60|~
-KL3312|2-ch thermocouple input|60|~
-KL3314|4-ch thermocouple input|60|~
-KL3351|1-ch resistor bridge input (strain gauge)|85|~
-KL3356|1-ch precision resistor bridge input|85|~
-KL3361|1-ch oscilloscope terminal|85|~
-KL3362|2-ch oscilloscope terminal|85|~
-KL3403|3-phase power measurement|85|~
-KL3404|4-ch analog input ±10 V|60|~
-KL3408|8-ch analog input ±10 V|60|~
-KL3444|4-ch analog input 0…20 mA|60|~
-KL3448|8-ch analog input 0…20 mA|60|~
-KL3454|4-ch analog input 4…20 mA|60|~
-KL3458|8-ch analog input 4…20 mA|60|~
-KL3464|4-ch analog input 0…10 V|60|~
-KL3468|8-ch analog input 0…10 V|60|~
-KL3681|Digital multimeter terminal|85|~
-KL4001|1-ch analog output 0…10 V|85|~
-KL4002|2-ch analog output 0…10 V|85|~
-KL4004|4-ch analog output 0…10 V|85|~
-KL4011|1-ch analog output 0…20 mA|85|~
-KL4012|2-ch analog output 0…20 mA|85|~
-KL4021|1-ch analog output 4…20 mA|85|~
-KL4022|2-ch analog output 4…20 mA|85|~
-KL4031|1-ch analog output ±10 V|85|~
-KL4032|2-ch analog output ±10 V|85|~
-KL4034|4-ch analog output ±10 V|85|~
-KL4112|2-ch analog output 0…20 mA, 16 bit|85|~
-KL4132|2-ch analog output ±10 V, 16 bit|85|~
-KL4404|4-ch analog output 0…10 V|85|~
-KL4408|8-ch analog output 0…10 V|85|~
-KL4414|4-ch analog output 0…20 mA|85|~
-KL4418|8-ch analog output 0…20 mA|85|~
-KL4424|4-ch analog output 4…20 mA|85|~
-KL4428|8-ch analog output 4…20 mA|85|~
-KL4434|4-ch analog output ±10 V|85|~
-KL4438|8-ch analog output ±10 V|85|~
-KL4494|2-ch analog input + 2-ch analog output ±10 V|85|~
-KL5001|SSI encoder interface|50|~
-KL5051|Bidirectional SSI interface|50|~
-KL5101|Incremental encoder interface, RS422|60|~
-KL5111|Incremental encoder interface, 24 V|60|~
-KL5121|Linear path control interface|60|~
-KL5151|Incremental encoder interface, 24 V|60|~
-KL5152|2-ch incremental encoder interface, 24 V|60|~
-KL6001|Serial interface RS232|65|~
-KL6011|Serial interface TTY|65|~
-KL6021|Serial interface RS422/RS485|65|~
-KL6031|Serial interface RS232, high speed|65|~
-KL6041|Serial interface RS422/RS485, high speed|65|~
-KL6201|AS-Interface master|100|~
-KL6224|IO-Link terminal|75|~
-KL6301|EIB/KNX bus terminal|55|~
-KL6401|LON bus terminal|55|~
-KL6581|EnOcean master terminal|55|~
-KL6751|CANopen master/slave terminal|85|~
-KL6771|MP-Bus master terminal|55|~
-KL6781|M-Bus master terminal|55|~
-KL6811|DALI/DSI master terminal|55|~
-KL6821|DALI-2 master terminal|55|~
-KL6851|DMX master terminal|55|~
-KL6904|TwinSAFE logic terminal|200|~
-KL9010|K-bus end terminal|0|~
-KL9020|K-bus extension end terminal|0|~
-KL9050|K-bus extension coupler|0|~
-KL9100|Potential feed terminal 24 V DC|0|~
-KL9110|Potential feed terminal 24 V DC, diagnostics|0|~
-KL9150|Potential feed terminal 230 V AC|0|~
-KL9160|Potential feed terminal 230 V AC, diagnostics|0|~
-KL9180|Potential distribution terminal|0|~
-KL9184|Potential distribution, 8 × 24 V / 8 × 0 V|0|~
-KL9185|Potential distribution, 4 × 24 V / 4 × 0 V|0|~
-KL9186|Potential distribution, 8 × 24 V|0|~
-KL9187|Potential distribution, 8 × 0 V|0|~
-KL9188|Potential distribution, 16 × 24 V|0|~
-KL9189|Potential distribution, 16 × 0 V|0|~
-KL9190|Potential feed terminal, any voltage|0|~
-KL9195|Shield terminal|0|~
-KL9200|Potential feed 24 V DC with fuse|0|~
-KL9210|Potential feed 24 V DC with fuse and diagnostics|0|~
-KL9260|Potential feed 230 V AC with fuse and diagnostics|0|~
-KL9400|K-bus power supply terminal, refreshes 2,000 mA|0|~
-KL9505|Power supply terminal 5 V DC|20|~
-KL9508|Power supply terminal 8 V DC|20|~
-KL9510|Power supply terminal 10 V DC|20|~
-KL9512|Power supply terminal 12 V DC|20|~
-KL9515|Power supply terminal 15 V DC|20|~
-KL9540|Surge filter, field supply|0|~
-KL9550|Surge filter, system and field supply|0|~
-KL9560|Power supply terminal 24 V DC, isolated|20|~
-KL9570|Buffer capacitor terminal|0|~
-EP1008-0001|EtherCAT Box, 8 digital inputs 24 V, M8|0
-EP1008-0002|EtherCAT Box, 8 digital inputs 24 V, M12|0
-EP1018-0001|EtherCAT Box, 8 digital inputs 24 V, 10 µs, M8|0
-EP1258-0001|EtherCAT Box, 8 digital inputs, timestamp, M8|0
-EP1809-0021|EtherCAT Box, 16 digital inputs 24 V, M12|0
-EP2008-0001|EtherCAT Box, 8 digital outputs 24 V, M8|0
-EP2008-0002|EtherCAT Box, 8 digital outputs 24 V, M12|0
-EP2028-0001|EtherCAT Box, 8 digital outputs 24 V, 2 A, M8|0
-EP2338-0001|EtherCAT Box, 8 digital inputs/outputs 24 V, M8|0
-EP2339-0021|EtherCAT Box, 16 digital inputs/outputs 24 V, M12|0
-EP2624-0002|EtherCAT Box, 4 relay outputs, M12|0
-EP2809-0021|EtherCAT Box, 16 digital outputs 24 V, M12|0
-EP3174-0002|EtherCAT Box, 4 analog inputs ±10 V / 0…20 mA, M12|0
-EP3182-1002|EtherCAT Box, 2 analog inputs 4…20 mA, HART|0
-EP3204-0002|EtherCAT Box, 4 RTD inputs, M12|0
-EP3314-0002|EtherCAT Box, 4 thermocouple inputs, M12|0
-EP3356-0022|EtherCAT Box, load cell input|0
-EP4174-0002|EtherCAT Box, 4 analog outputs ±10 V / 0…20 mA, M12|0
-EP4374-0002|EtherCAT Box, 2 analog inputs + 2 analog outputs, M12|0
-EP5001-0002|EtherCAT Box, SSI encoder interface|0
-EP5101-0002|EtherCAT Box, incremental encoder interface|0
-EP5151-0002|EtherCAT Box, incremental encoder interface, 24 V|0
-EP6002-0002|EtherCAT Box, 2 serial interfaces RS232/RS485|0
-EP6224-0002|EtherCAT Box, IO-Link master, 4 ports|0
-EP7041-0002|EtherCAT Box, stepper motor 48 V, 5 A|0
-EP7047-1032|EtherCAT Box, stepper motor with vector control|0
-EP9128-0021|EtherCAT Box, 8-port junction, M8|0
-EP9214-0023|EtherCAT Box, power distribution|0
-EP9224-0037|EtherCAT Box, power distribution with diagnostics|0
-EPP1008-0001|EtherCAT P Box, 8 digital inputs 24 V, M8|0
-EPP2008-0001|EtherCAT P Box, 8 digital outputs 24 V, M8|0
-EPP2338-0001|EtherCAT P Box, 8 digital inputs/outputs 24 V, M8|0
-EPP3174-0002|EtherCAT P Box, 4 analog inputs, M12|0
-EPP4174-0002|EtherCAT P Box, 4 analog outputs, M12|0
-EPP6228-0022|EtherCAT P Box, IO-Link master, 8 ports|0
+BK1250|E-bus to K-bus interface|90|~
+ED1008|8-channel digital input, 24 V DC, 3 ms, push-in|65
+ED1809|16-channel digital input, 24 V DC, 3 ms, push-in|65
+ED1819|16-channel digital input, 24 V DC, 10 µs, push-in|65
+ED1829|16-channel digital input, 24 V DC, 3 ms, positive/ground switching, push-in|95
+ED1837|32-channel digital input, 24 V DC, adjustable, push-in|55
+ED1839|16-channel digital input, 24 V DC, adjustable, push-in|55
+ED1859|8-channel digital input + 8-channel digital output, 24 V DC, 3 ms, 0.5 A, push-in|85
+ED1889|16-channel digital input, 24 V DC, 3 ms, ground switching, push-in|65
+ED1897|32-channel digital input, 24 V DC, adjustable, ground switching, push-in|55
+ED2004|4-channel digital output, 24 V DC, 0.5 A, push-in|65
+ED2008|8-channel digital output, 24 V DC, 0.5 A, push-in|80
+ED2032|2-channel digital output, 24 V DC, 2 A, push-in, with channel diagnostics|65
+ED2034|4-channel digital output, 24 V DC, 2 A, push-in, with channel diagnostics|70
+ED2504|4-channel PWM output, 5…24 V DC, 1.5 A, push-in, with 4 x digital input|100
+ED2807|32-channel digital output, 24 V DC, 0.5 A, push-in|65
+ED2808|8-channel digital output, 24 V DC, 0.5 A, 2-wire connection, push-in|75
+ED2809|16-channel digital output, 24 V DC, 0.5 A, push-in|100
+ED2828|8-channel digital output, 24 V DC, 2 A, push-in|80
+ED2838|8-channel digital output, 24 V DC, 2 A, push-in, with channel diagnostics|85
+ED2887|32-channel digital output, 24 V DC, 0.5 A, ground switching, push-in|65
+ED2889|16-channel digital output, 24 V DC, 0.5 A, ground switching, push-in|100
+ED3072|2-channel analog input, multi-function, ±10 V, ±20 mA, 16 bit, single-ended, 2 ksps, push-in|85
+ED3074|4-channel analog input, multi-function, ±10 V, ±20 mA, 16 bit, single-ended, 2 ksps, push-in|95
+ED3078|8-channel analog input, multi-function, ±10 V, ±20 mA, 16 bit, single-ended, 2 ksps, push-in|100
+ED3172|2-channel analog input, multi-function, ±10 V, ±20 mA, 16 bit, 20 ksps, push-in|180
+ED3174|4-channel analog input, multi-function, ±10 V, ±20 mA, 16 bit, 20 ksps, push-in|180
+ED3274|4-channel analog input, temperature, RTD, TC, push-in|40
+ED3361|1-channel analog input, measuring bridge, full bridge, 24 bit, push-in, sensor supply 5/10 V DC, with 1 x digital input, 1 x digital output|90
+ED3361-0100|1-channel analog input, measuring bridge, full bridge, 24 bit, push-in, sensor supply 5/10 V DC|90
+ED3362|2-channel analog input, measuring bridge, full bridge, 24 bit, push-in, sensor supply 5/10 V DC, with 2 x digital combi|90
+ED3362-0100|2-channel analog input, measuring bridge, full bridge, 24 bit, push-in, sensor supply 5/10 V DC|90
+ED4072|2-channel analog output, multi-function, ±10 V, ±20 mA, 16 bit, single-ended, 2 ksps, push-in|100
+ED4074|4-channel analog output, multi-function, ±10 V, ±20 mA, 16 bit, single-ended, 2 ksps, push-in|125
+ED4078|8-channel analog output, multi-function, ±10 V, ±20 mA, 16 bit, single-ended, 2 ksps, push-in|180
+ED4172|2-channel analog output, multi-function, ±10 V, ±20 mA, 16 bit, single-ended, 10 ksps, push-in|70
+ED4174|4-channel analog output, multi-function, ±10 V, ±20 mA, 16 bit, single-ended, 10 ksps, push-in|70
+ED5002|2-channel encoder interface, SSI, push-in|90
+ED5112|2-channel encoder interface, incremental, 5 V DC (DIFF RS422, TTL, open collector), 5 MHz, push-in, 2 x AB/1 x ABC|100
+ED6001-0009|1-channel communication interface, serial, RS232, D-sub|195|~
+ED6002-0009|2-channel communication interface, serial, RS232, D-sub|195|~
+ED6011|1-channel communication interface, serial, RS232/RS422/RS485, push-in|190
+ED6011-0009|1-channel communication interface, serial, RS232/RS422/RS485, D-sub|195|~
+ED6012|2-channel communication interface, serial, RS232/RS422/RS485, push-in|190
+ED6012-0009|2-channel communication interface, serial, RS232/RS422/RS485, D-sub|195|~
+ED6060|Communication interface, for Beckhoff Diagnostics app|65
+ED6224|4-channel communication interface, IO-Link, master, push-in|120
+ED6781|1-channel communication interface, M-Bus, master, push-in|70
+ED7062|2-channel motion interface, stepper motor, 48 V DC, 3 A, push-in, with incremental encoder, 5 V DC|175
+ED7211-0010|1-channel motion interface, servomotor, 48 V DC, 4.5 A, OCT, push-in|175
+ED8601-8411|12-channel multi-interface, 8 x DI, 1 x CNT, 4 x DO, 2 x PWM, 1 x AI, 1 x AO, 1 x ENC AB, push-in|85
+ED9100|Potential supply, 24 V DC, 10 A, push-in|0
+ED9110|Potential supply, 24 V DC, 10 A, push-in, with diagnostics|60
+ED9183|Potential distribution, 16 x 1 potential, push-in|0
+ED9184|Potential distribution, 8 x 24 V DC, 8 x 0 V DC, push-in|0
+ED9186|Potential distribution, 8 x 24 V DC, push-in|0
+ED9188|Potential distribution, 16 x 24 V DC, push-in|0
+ED9189|Potential distribution, 16 x 0 V DC, push-in|0
+ED9410|Power supply for E-bus, 24 V DC, 2 A, push-in, with diagnostics|70
+EK1110|EtherCAT extension|130
+EK1110-0008|EtherCAT extension with M8 connection|130
+EK1110-0043|EtherCAT EJ coupler, CX and EL terminal connection|50
+EK1110-0044|EtherCAT EJ coupler, CX and EL terminal connection, EtherCAT junction|140
+EK1122|2-port EtherCAT junction|220
+EK1122-0008|2-port EtherCAT junction with M8 connection|220
+EK1122-0080|2-port EtherCAT junction, Fast Hot Connect|220
+EK1521|1-port EtherCAT fiber-optic junction|350
+EK1521-0010|1-port EtherCAT fiber-optic junction|350
+EK1561|1-port EtherCAT plastic optical fiber junction|200
+EL1002|2-channel digital input, 24 V DC, 3 ms|90
+EL1004|4-channel digital input, 24 V DC, 3 ms|90
+EL1004-0020|4-channel digital input, 24 V DC, 3 ms, isolation voltage 2500 V DC|90
+EL1008|8-channel digital input, 24 V DC, 3 ms|90
+EL1012|2-channel digital input, 24 V DC, 10 µs|90
+EL1014|4-channel digital input, 24 V DC, 10 µs|90
+EL1018|8-channel digital input, 24 V DC, 10 µs|90
+EL1024|4-channel digital input, 24 V DC, 3 ms, type 2|90
+EL1034|4-channel digital input, 24 V DC, 10 µs, potential-free|90
+EL1052|2-channel digital input, NAMUR|40
+EL1054|4-channel digital input, NAMUR|50
+EL1084|4-channel digital input, 24 V DC, 3 ms, ground switching|90
+EL1088|8-channel digital input, 24 V DC, 3 ms, ground switching|90
+EL1094|4-channel digital input, 24 V DC, 10 µs, ground switching|90
+EL1098|8-channel digital input, 24 V DC, 10 µs, ground switching|90
+EL1104|4-channel digital input, 24 V DC, 3 ms, 2-/3-wire connection|90
+EL1114|4-channel digital input, 24 V DC, 10 µs, 2-/3-wire connection|90
+EL1124|4-channel digital input, 5 V DC, 0.05 µs|90
+EL1134|4-channel digital input, 48 V DC, 10 µs|90
+EL1144|4-channel digital input, 12 V DC, 10 µs|90
+EL1202|2-channel digital input, 24 V DC, 1 µs|110
+EL1252|2-channel digital input, 24 V DC, 1 µs, timestamp|110
+EL1252-0010|2-channel digital input, 24 V DC, 10 µs, timestamp|110
+EL1252-0050|2-channel digital input, 5 V DC, 1 µs, timestamp|90
+EL1252-0060|2-channel digital input, 10 V DC, 1 µs, timestamp|110
+EL1254|4-channel digital input, 24 V DC, 1 µs, timestamp|80
+EL1258|8-channel digital input, 24 V DC, 1 µs, multi-timestamp|130
+EL1258-0010|8-channel digital input, 24 V DC, 1 µs, ground switching, multi-timestamp|130
+EL1259|8-channel digital input + 8-channel digital output, 24 V DC, 1 µs, 0.5 A, multi-timestamp|130
+EL1262|2-channel digital input, 24 V DC, 1 µs, oversampling|70
+EL1262-0010|2-channel digital input + 2-channel digital output, 5 V DC, 100 ns, 0.1 A, RS422/RS485, oversampling|540
+EL1262-0050|2-channel digital input, 5 V DC, 1 µs, oversampling|70
+EL1264|4-channel digital input, 24 V DC, 1 µs, oversampling|70
+EL1382|2-channel digital input, thermistor, 30 ms|150
+EL1409|16-channel digital input, 24 V DC, 3 ms|70
+EL1417|32-channel digital input, 24 V DC, adjustable|60
+EL1429|16-channel digital input, 24 V DC, 3 ms, positive/ground switching|110
+EL1489|16-channel digital input, 24 V DC, 3 ms, ground switching|65
+EL1502|2-channel digital input, counter, 24 V DC, 100 kHz|130
+EL1512|2-channel digital input, counter, 24 V DC, 1 kHz|130
+EL1702|2-channel digital input, 120…230 V AC, 10 ms|90
+EL1702-0020|2-channel digital input, 220 V DC, 3 ms|55
+EL1712|2-channel digital input, 120 V AC/DC, 10 ms|90
+EL1712-0020|2-channel digital input, 120 V DC, 3 ms|90
+EL1722|2-channel digital input, 120…230 V AC, 10 ms, without power contacts|90
+EL1804|4-channel digital input, 24 V DC, 3 ms, 3-wire connection|90
+EL1808|8-channel digital input, 24 V DC, 3 ms, 2-wire connection|100
+EL1809|16-channel digital input, 24 V DC, 3 ms|100
+EL1814|4-channel digital input, 24 V DC, 10 µs, 3-wire connection|90
+EL1819|16-channel digital input, 24 V DC, 10 µs|100
+EL1852|8-channel digital input + 8-channel digital output, 24 V DC, 3 ms, 0.5 A, flat-ribbon cable|100
+EL1859|8-channel digital input + 8-channel digital output, 24 V DC, 3 ms, 0.5 A|130
+EL1862|16-channel digital input, 24 V DC, 3 ms, flat-ribbon cable|100
+EL1862-0010|16-channel digital input, 24 V DC, 3 ms, ground switching, flat-ribbon cable|100
+EL1872|16-channel digital input, 24 V DC, 10 µs, flat-ribbon cable|100
+EL1872-0010|16-channel digital input, 24 V DC, 10 µs, ground switching, flat-ribbon cable|100
+EL1889|16-channel digital input, 24 V DC, 3 ms, ground switching|110
+EL1899|16-channel digital input, 24 V DC, 10 µs, ground switching|110
+EL1904|4-channel digital input, 24 V DC, TwinSAFE|200
+EL1918|8-channel digital input, 24 V DC, TwinSAFE, TwinSAFE Logic|165
+EL2002|2-channel digital output, 24 V DC, 0.5 A|100
+EL2004|4-channel digital output, 24 V DC, 0.5 A|100
+EL2008|8-channel digital output, 24 V DC, 0.5 A|110
+EL2014|4-channel digital output, 24 V DC, 0.5 A, with extended diagnostics|60
+EL2022|2-channel digital output, 24 V DC, 2 A|100
+EL2024|4-channel digital output, 24 V DC, 2 A|120
+EL2024-0010|4-channel digital output, 12 V DC, 2 A|120
+EL2032|2-channel digital output, 24 V DC, 2 A, with diagnostics|100
+EL2034|4-channel digital output, 24 V DC, 2 A, with diagnostics|120
+EL2042|2-channel digital output, 24 V DC, 2 x 4 A/1 x 8 A|120
+EL2044|4-channel digital output, 24 V DC, 2 A, with extended diagnostics|55
+EL2068|8-channel digital output, 24 V DC, 0.5 A, with channel diagnostics|60
+EL2084|4-channel digital output, 24 V DC, 0.5 A, ground switching|100
+EL2088|8-channel digital output, 24 V DC, 0.5 A, ground switching|110
+EL2124|4-channel digital output, 5 V DC, 20 mA|130
+EL2202|2-channel digital output, 24 V DC, 0.5 A, push-pull, tri-state|130
+EL2202-0100|2-channel digital output, 24 V DC, 0.5 A, push-pull, tri-state, distributed clocks|130
+EL2212|2-channel digital output, 24…72 V DC, 10 A, overexcitation, multi-timestamp|120
+EL2252|2-channel digital output, 24 V DC, 0.5 A, timestamp|130
+EL2258|8-channel digital output, 24 V DC, 0.5 A, multi-timestamp|130
+EL2262|2-channel digital output, 24 V DC, 0.5 A, oversampling|70
+EL2407|32-channel digital output, 24 V DC, 0.5 A|55
+EL2409|16-channel digital output, 24 V DC, 0.5 A|120
+EL2489|16-channel digital output, 24 V DC, 0.5 A, ground switching|105
+EL2502|2-channel PWM output, 24 V DC, 0.5 A|140
+EL2502-0010|2-channel PWM output, 24 V DC, 0.5 A, timestamp|100
+EL2521|1-channel pulse train output, incr. enc. simulation, RS422, 50 mA|280
+EL2521-0024|1-channel pulse train output, incr. enc. simulation, 24 V DC, 1 A|280
+EL2521-0025|1-channel pulse train output, incr. enc. simulation, 24 V DC, 1 A, ground switching|280
+EL2521-0124|1-channel pulse train output, incr. enc. simulation, 24 V DC, 1 A, with capture/compare input/output|280
+EL2522|2-channel pulse train output, incr. enc. simulation, RS422, 50 mA|120
+EL2535|2-channel PWM output, 24 V DC, 1 A, current-controlled|110
+EL2535-0002|2-channel PWM output, 24 V DC, 2 A, current-controlled|110
+EL2535-0005|2-channel PWM output, 24 V DC, 5 A, current-controlled|110
+EL2535-0050|2-channel PWM output, 24 V DC, 50 mA, current-controlled|110
+EL2535-0100|2-channel PWM output, 24 V DC, 0.1 A, current-controlled|110
+EL2535-0103|2-channel PWM output, 24…48 V DC, 3.5 A, current-controlled|110
+EL2564|4-channel LED output, 5…48 V DC, 4 A, RGBW, common anode|70
+EL2564-0010|4-channel LED output, 8…48 V DC, 3 A, RGBW, common cathode|70
+EL2574|4-channel LED output, pixel LED|80
+EL2595|1-channel LED output, 2…48 V DC, 0.7 A|130
+EL2596|1-channel LED output, 0…24 V DC, 3 A|240
+EL2596-0010|1-channel LED output, 0…48 V DC, 3 A|265
+EL2602|2-channel relay output, 230 V AC, 30 V DC, 5 A|170
+EL2602-0010|2-channel relay output, 230 V AC, 30 V DC, 5 A, contact-protecting switching|120
+EL2612|2-channel relay output, 125 V AC, 30 V DC, 0.5 A AC, 2 A DC|150
+EL2622|2-channel relay output, 230 V AC, 30 V DC, 5 A, without power contacts|170
+EL2622-0010|2-channel relay output, 230 V AC, 30 V DC, 5 A, contact-protecting switching, without power contacts|120
+EL2624|4-channel relay output, 125 V AC, 30 V DC, 0.5 A AC, 2 A DC|200
+EL2634|4-channel relay output, 250 V AC, 30 V DC, 4 A|80
+EL2642|2-channel reed output, multiplexer, 48 V AC/DC, 0.5 A, potential-free, 1 x 4|60
+EL2652|2-channel relay output, 230 V AC, 300 V DC, 1 A|180
+EL2712|2-channel TRIAC output, 12…230 V AC, 0.5 A|120
+EL2722|2-channel TRIAC output, 12…230 V AC, 1 A|120
+EL2784|4-channel solid-state relay output, 30 V AC, 48 V DC, 2 A|140
+EL2788|8-channel solid-state relay output, 30 V AC, 48 V DC, 2 A|140
+EL2794|4-channel solid-state relay output, 30 V AC, 48 V DC, 2 A, potential-free|140
+EL2798|8-channel solid-state relay output, 30 V AC, 48 V DC, 2 A, potential-free|140
+EL2808|8-channel digital output, 24 V DC, 0.5 A, 2-wire connection|110
+EL2809|16-channel digital output, 24 V DC, 0.5 A|140
+EL2819|16-channel digital output, 24 V DC, 0.5 A, with extended diagnostics|90
+EL2828|8-channel digital output, 24 V DC, 2 A|110
+EL2838|8-channel digital output, 24 V DC, 2 A, with channel diagnostics|85
+EL2869|16-channel digital output, 24 V DC, 0.5 A, with channel diagnostics|60
+EL2872|16-channel digital output, 24 V DC, 0.5 A, flat-ribbon cable|130
+EL2872-0010|16-channel digital output, 24 V DC, 0.5 A, ground switching, flat-ribbon cable|130
+EL2878-0005|8-channel digital output, 24 V DC, 0.5 A, flat-ribbon cable, with diagnostics|100
+EL2889|16-channel digital output, 24 V DC, 0.5 A, ground switching|140
+EL2904|4-channel digital output, 24 V DC, 0.5 A, TwinSAFE|221
+EL2911|4-channel digital input + 1-channel digital output, 24 V DC, 10 A, TwinSAFE, TwinSAFE Logic|180
+EL2912|2-channel digital output, 24 V DC, 2 A, TwinSAFE, TwinSAFE Logic|200
+EL3001|1-channel analog input, voltage, ±10 V, 12 bit, single-ended|130
+EL3002|2-channel analog input, voltage, ±10 V, 12 bit, single-ended|130
+EL3004|4-channel analog input, voltage, ±10 V, 12 bit, single-ended|130
+EL3008|8-channel analog input, voltage, ±10 V, 12 bit, single-ended|130
+EL3008-0003|8-channel analog input, voltage, ±3 V, 16 bit, cascaded|190
+EL3008-0005|8-channel analog input, voltage, ±5 V, 16 bit, cascaded|190
+EL3011|1-channel analog input, current, 0…20 mA, 12 bit, differential|130
+EL3012|2-channel analog input, current, 0…20 mA, 12 bit, differential|130
+EL3014|4-channel analog input, current, 0…20 mA, 12 bit, differential|130
+EL3021|1-channel analog input, current, 4…20 mA, 12 bit, differential|130
+EL3022|2-channel analog input, current, 4…20 mA, 12 bit, differential|130
+EL3024|4-channel analog input, current, 4…20 mA, 12 bit, differential|130
+EL3041|1-channel analog input, current, 0…20 mA, 12 bit, single-ended|130
+EL3042|2-channel analog input, current, 0…20 mA, 12 bit, single-ended|130
+EL3044|4-channel analog input, current, 0…20 mA, 12 bit, single-ended|130
+EL3048|8-channel analog input, current, 0…20 mA, 12 bit, single-ended|130
+EL3051|1-channel analog input, current, 4…20 mA, 12 bit, single-ended|130
+EL3052|2-channel analog input, current, 4…20 mA, 12 bit, single-ended|130
+EL3054|4-channel analog input, current, 4…20 mA, 12 bit, single-ended|130
+EL3058|8-channel analog input, current, 4…20 mA, 12 bit, single-ended|130
+EL3061|1-channel analog input, voltage, 0…10 V, 12 bit, single-ended|130
+EL3062|2-channel analog input, voltage, 0…10 V, 12 bit, single-ended|130
+EL3062-0030|2-channel analog input, voltage, 0…30 V, 12 bit, single-ended|130
+EL3064|4-channel analog input, voltage, 0…10 V, 12 bit, single-ended|130
+EL3068|8-channel analog input, voltage, 0…10 V, 12 bit, single-ended|130
+EL3072|2-channel analog input, multi-function, ±10 V, ±20 mA, 16 bit, single-ended, 2 ksps|85
+EL3074|4-channel analog input, multi-function, ±10 V, ±20 mA, 16 bit, single-ended, 2 ksps|95
+EL3078|8-channel analog input, multi-function, ±10 V, ±20 mA, 16 bit, single-ended, 2 ksps|90
+EL3101|1-channel analog input, voltage, ±10 V, 16 bit, differential|130
+EL3102|2-channel analog input, voltage, ±10 V, 16 bit, differential|170
+EL3104|4-channel analog input, voltage, ±10 V, 16 bit, differential|130
+EL3111|1-channel analog input, current, 0…20 mA, 16 bit, differential|130
+EL3112|2-channel analog input, current, 0…20 mA, 16 bit, differential|170
+EL3112-0011|2-channel analog input, current, ±20 mA, 16 bit, differential|170
+EL3114|4-channel analog input, current, 0…20 mA, 16 bit, differential|130
+EL3121|1-channel analog input, current, 4…20 mA, 16 bit, differential|130
+EL3122|2-channel analog input, current, 4…20 mA, 16 bit, differential|170
+EL3124|4-channel analog input, current, 4…20 mA, 16 bit, differential|130
+EL3124-0090|4-channel analog input, current, 4…20 mA, 16 bit, differential, TwinSAFE SC|130
+EL3141|1-channel analog input, current, 0…20 mA, 16 bit, single-ended|130
+EL3142|2-channel analog input, current, 0…20 mA, 16 bit, single-ended|170
+EL3142-0010|2-channel analog input, current, ±10 mA, 16 bit, single-ended|170
+EL3144|4-channel analog input, current, 0…20 mA, 16 bit, single-ended|130
+EL3151|1-channel analog input, current, 4…20 mA, 16 bit, single-ended|130
+EL3152|2-channel analog input, current, 4…20 mA, 16 bit, single-ended|170
+EL3154|4-channel analog input, current, 4…20 mA, 16 bit, single-ended|130
+EL3161|1-channel analog input, voltage, 0…10 V, 16 bit, single-ended|130
+EL3162|2-channel analog input, voltage, 0…10 V, 16 bit, single-ended|170
+EL3164|4-channel analog input, voltage, 0…10 V, 16 bit, single-ended|130
+EL3172|2-channel analog input, multi-function, ±10 V, ±20 mA, 16 bit, differential, electrically isolated|150
+EL3172-0020|2-channel analog input, multi-function, ±10 V, ±20 mA, 16 bit, differential, electrically isolated, factory calibrated|150
+EL3174|4-channel analog input, multi-function, ±10 V, ±20 mA, 16 bit|180
+EL3174-0002|4-channel analog input, multi-function, ±10 V, ±20 mA, 16 bit, differential, electrically isolated|150
+EL3174-0032|4-channel analog input, multi-function, ±3 V, ±20 mA, 16 bit, differential, electrically isolated|150
+EL3174-0042|4-channel analog input, multi-function, ±60 V, ±30 V, 16 bit, differential, electrically isolated|150
+EL3174-0090|4-channel analog input, multi-function, ±10 V, ±20 mA, 16 bit, TwinSAFE SC|180
+EL3182|2-channel analog input, current, 0/4…20 mA, 16 bit, single-ended, HART|130
+EL3184|4-channel analog input, current, 4…20 mA, 16 bit, single-ended, HART|75
+EL3201|1-channel analog input, temperature, RTD (Pt100), 16 bit|190
+EL3201-0010|1-channel analog input, temperature, RTD (Pt100), 16 bit, high-precision|190
+EL3202|2-channel analog input, temperature, RTD (Pt100), 16 bit|190
+EL3202-0010|2-channel analog input, temperature, RTD (Pt100), 16 bit, high-precision|190
+EL3204|4-channel analog input, temperature, RTD (Pt100), 16 bit|190
+EL3204-0162|4-channel analog input, multi-function, ±10 V, RTD (Pt100), 12 bit, single-ended|130
+EL3204-0200|4-channel analog input, temperature, RTD/NTC, 16 bit|150
+EL3208|8-channel analog input, temperature, RTD (Pt100), 16 bit|140
+EL3208-0010|8-channel analog input, temperature, RTD (Pt1000, NTC), 16 bit|95
+EL3214|4-channel analog input, temperature, RTD (Pt100), 16 bit, 3-wire connection|140
+EL3214-0090|4-channel analog input, temperature, RTD (Pt100), 16 bit, 3-wire connection, TwinSAFE SC|140
+EL3218|8-channel analog input, temperature, RTD (Pt100), 16 bit, 3-wire connection|120
+EL3255|5-channel analog input, potentiometer, 300 Ω…50 kΩ, 16 bit|80
+EL3311|1-channel analog input, temperature, thermocouple, 16 bit|200
+EL3312|2-channel analog input, temperature, thermocouple, 16 bit|200
+EL3314|4-channel analog input, temperature, thermocouple, 16 bit|200
+EL3314-0002|4-channel analog input, temperature, thermocouple, 24 bit, electrically isolated|200
+EL3314-0010|4-channel analog input, temperature, thermocouple, 24 bit, high-precision|200
+EL3314-0090|4-channel analog input, temperature, thermocouple, 16 bit, TwinSAFE SC|200
+EL3314-0092|4-channel analog input, temperature, thermocouple, 24 bit, galvanically isolated, TwinSAFE SC|200
+EL3318|8-channel analog input, temperature, thermocouple, 16 bit|210
+EL3351|1-channel analog input, measuring bridge, full bridge, 16 bit|170
+EL3356|1-channel analog input, measuring bridge, full bridge, 16 bit|210
+EL3356-0010|1-channel analog input, measuring bridge, full bridge, 24 bit, high-precision|280
+EL3356-0090|1-channel analog input, measuring bridge, full bridge, 24 bit, high-precision, TwinSAFE SC|280
+EL3403|3-channel analog input, power measurement, 500 V AC, 1 A, 16 bit|120
+EL3423|3-channel analog input, power measurement, 480 V AC/DC, 1 A, 24 bit|120
+EL3443|3-channel analog input, power measurement, 480 V AC/DC, 1 A, 24 bit|120
+EL3443-0010|3-channel analog input, power measurement, 480 V AC/DC, 5 A, 24 bit|120
+EL3443-0011|3-channel analog input, power measurement, 480 V AC/DC, 0.1 A, 24 bit|120
+EL3443-0013|3-channel analog input, power measurement, 480 V AC/DC, 333 mV, 24 bit|120
+EL3443-0020|3-channel analog input, power measurement, 480 V AC/DC, 1 A, 24 bit, factory calibrated|120
+EL3444|4-channel analog input, current, 10 A AC/DC, 24 bit, distributed power measurement, electrically isolated|160
+EL3446|6-channel analog input, current, 1 A, 24 bit, distributed power measurement|120
+EL3446-0011|6-channel analog input, current, 0.1 A, 24 bit, distributed power measurement|120
+EL3453|3-channel analog input, power measurement, 690 V AC, 0.1/1/5 A, 24 bit, electrically isolated|260
+EL3453-0020|3-channel analog input, power measurement, 690 V AC, 0.1/1/5 A, 24 bit, electrically isolated, factory calibrated|260
+EL3453-0100|3-channel analog input, power measurement, 130 V AC, 0.1/1/5 A, 24 bit, electrically isolated|260
+EL3475|12-channel analog input, 4-port, multi-function, 333 mV, 24 bit, distributed power measurement, RJ45|320
+EL3475-0200|12-channel analog input, 4-port, multi-function, 333 mV, 24 bit, distributed power measurement, RJ45, extended functionalities|320
+EL3483|3-channel analog input, mains monitor, 480 V AC, 24 bit|120
+EL3483-0060|3-channel analog input, mains monitor, 480 V AC, 24 bit, with analog values|120
+EL3602|2-channel analog input, voltage, ±10 V, ±5 V, ±2.5 V, ±1.25 V, 24 bit, high-precision|190
+EL3602-0002|2-channel analog input, voltage, ±200 mV, 24 bit, high-precision|190
+EL3602-0010|2-channel analog input, voltage, ±75 mV, 24 bit, high-precision|190
+EL3612|2-channel analog input, current, 0…20 mA, 24 bit, high-precision|190
+EL3621-0020|1-channel analog input, current, 4…20 mA, 24 bit, high-precision, factory calibrated|190
+EL3632|2-channel analog input, IEPE/accelerometer, 16 bit, 50 ksps|220
+EL3681|1-channel analog input, multimeter, 300 V AC/DC, 10 A, 19 bit|150
+EL3692|2-channel analog input, resistance, 100 mΩ…10 MΩ, 24 bit|220
+EL3702|2-channel analog input, voltage, ±10 V, 16 bit, oversampling|200
+EL3702-0015|2-channel analog input, voltage, ±150 mV, 16 bit, oversampling|200
+EL3742|2-channel analog input, current, 0…20 mA, 16 bit, oversampling|200
+EL3751|1-channel analog input, multi-function, 24 bit, 10 ksps|260
+EL3751-0004|1-channel analog input, temperature, RTD (Pt100), 24 bit, 10 ksps|260
+EL3751-0024|1-channel analog input, temperature, RTD (Pt100), 24 bit, 10 ksps, factory calibrated|260
+EL3773|3-channel analog input, multi-function, 500 V AC/DC, 1 A, 16 bit, 10 ksps, oversampling|200
+EL3783|3-channel analog input, multi-function, 690 V AC, 1/5 A, 16 bit, 20 ksps, electrically isolated, oversampling|260
+EL3783-0100|3-channel analog input, multi-function, 130 V AC, 1/5 A, 16 bit, 20 ksps, electrically isolated, oversampling|260
+EL4001|1-channel analog output, voltage, 0…10 V, 12 bit|140
+EL4002|2-channel analog output, voltage, 0…10 V, 12 bit|140
+EL4004|4-channel analog output, voltage, 0…10 V, 12 bit|140
+EL4008|8-channel analog output, voltage, 0…10 V, 12 bit|100
+EL4011|1-channel analog output, current, 0…20 mA, 12 bit|140
+EL4012|2-channel analog output, current, 0…20 mA, 12 bit|140
+EL4014|4-channel analog output, current, 0…20 mA, 12 bit|140
+EL4018|8-channel analog output, current, 0…20 mA, 12 bit|100
+EL4021|1-channel analog output, current, 4…20 mA, 12 bit|140
+EL4022|2-channel analog output, current, 4…20 mA, 12 bit|140
+EL4024|4-channel analog output, current, 4…20 mA, 12 bit|140
+EL4028|8-channel analog output, current, 4…20 mA, 12 bit|100
+EL4031|1-channel analog output, voltage, ±10 V, 12 bit|140
+EL4032|2-channel analog output, voltage, ±10 V, 12 bit|140
+EL4034|4-channel analog output, voltage, ±10 V, 12 bit|140
+EL4038|8-channel analog output, voltage, ±10 V, 12 bit|100
+EL4072|2-channel analog output, multi-function, ±10 V, ±20 mA, 16 bit, 2 ksps|100
+EL4074|4-channel analog output, multi-function, ±10 V, ±20 mA, 16 bit, 2 ksps|125
+EL4078|8-channel analog output, multi-function, ±10 V, ±20 mA, 16 bit, 2 ksps|180
+EL4102|2-channel analog output, voltage, 0…10 V, 16 bit|170
+EL4104|4-channel analog output, voltage, 0…10 V, 16 bit|190
+EL4112|2-channel analog output, current, 0…20 mA, 16 bit|110
+EL4112-0010|2-channel analog output, current, ±10 mA, 16 bit|110
+EL4114|4-channel analog output, current, 0…20 mA, 16 bit|110
+EL4122|2-channel analog output, current, 4…20 mA, 16 bit|110
+EL4124|4-channel analog output, current, 4…20 mA, 16 bit|110
+EL4132|2-channel analog output, voltage, ±10 V, 16 bit|170
+EL4134|4-channel analog output, voltage, ±10 V, 16 bit|190
+EL4172|2-channel analog output, multi-function, ±10 V, ±20 mA, 16 bit, differential, 10 ksps, electrically isolated|90
+EL4374|2-channel analog input + 2-channel analog output, multi-function, ±10 V, ±20 mA, 16 bit, 2 ksps|90
+EL4712|2-channel analog output, current, 0…20 mA, 16 bit, oversampling|100
+EL4732|2-channel analog output, voltage, ±10 V, 16 bit, oversampling|180
+EL5001|1-channel encoder interface, SSI|120
+EL5001-0011|1-channel encoder interface, SSI, monitor|130
+EL5001-0012|1-channel encoder interface, SSI, simulation|120
+EL5001-0090|1-channel encoder interface, SSI, TwinSAFE SC|120
+EL5002|2-channel encoder interface, SSI|130
+EL5021|1-channel encoder interface, SinCos, 1 VPP|120
+EL5021-0090|1-channel encoder interface, SinCos, 1 VPP, TwinSAFE SC|120
+EL5031-0011|1-channel encoder interface, EnDat® 2.2, oversampling|120
+EL5032|2-channel encoder interface, EnDat® 2.2|120
+EL5032-0090|2-channel encoder interface, EnDat® 2.2, TwinSAFE SC|120
+EL5042|2-channel encoder interface, BiSS® C|120
+EL5072|2-channel displacement sensor interface, inductive, LVDT, RVDT, half bridge|200
+EL5101|1-channel encoder interface, incremental, 5 V DC (DIFF RS422, TTL), 1 MHz|130
+EL5101-0010|1-channel encoder interface, incremental, 5 V DC (DIFF RS422), 5 MHz|130
+EL5101-0011|1-channel encoder interface, incremental, 5 V DC (DIFF RS422), 5 MHz, oversampling|130
+EL5101-0090|1-channel encoder interface, incremental, 5 V DC (DIFF RS422, TTL), 1 MHz, TwinSAFE SC|130
+EL5102|2-channel encoder interface, incremental, 5 V DC (DIFF RS422, TTL, open collector), 5 MHz|210
+EL5112|2-channel encoder interface, incremental, 5 V DC (DIFF RS422, TTL, open collector), 5 MHz, 2 x AB/1 x ABC|190
+EL5122|2-channel encoder interface, incremental, 5 V DC (TTL, open collector), 1 MHz|190
+EL5131|1-channel encoder interface, incremental, 5 V DC, 5 MHz, with 2 x digital output 24 V DC|240
+EL5151|1-channel encoder interface, incremental, 24 V DC HTL, 100 kHz|130
+EL5151-0021|1-channel encoder interface, incremental, 24 V DC HTL, 100 kHz, with 1 x digital output 24 V DC|130|~
+EL5151-0090|1-channel encoder interface, incremental, 24 V DC HTL, 100 kHz, TwinSAFE SC|130
+EL5152|2-channel encoder interface, incremental, 24 V DC HTL, 100 kHz|130
+EL6001|1-channel communication interface, serial, RS232|120
+EL6002|2-channel communication interface, serial, RS232, D-sub|170
+EL6021|1-channel communication interface, serial, RS422/RS485|170
+EL6021-0021|1-channel communication interface, serial, RS422/RS485, line device|170
+EL6022|2-channel communication interface, serial, RS422/RS485, D-sub|270
+EL6070|License key for TwinCAT 3.1|120
+EL6071|License key for TwinCAT 3.1, 2nd generation|120
+EL6072|License key for TwinCAT 3.1, 2nd generation, with RTC|120
+EL6080|1-channel communication interface, memory, 128 kByte, NOVRAM|130
+EL6090|Display with navigation switch, operating hours counter|80
+EL6184|4-channel communication interface, HART, secondary master|70
+EL6201|1-channel communication interface, ASi, master|120
+EL6224|4-channel communication interface, IO-Link, master|120
+EL6224-0090|4-channel communication interface, IO-Link, master, TwinSAFE SC|120
+EL6233|2-channel communication interface, Ethernet-APL|195|~
+EL6251|1-port communication interface, Modbus TCP, client/server|200
+EL6254|4-port communication interface, Modbus TCP, client/server|250
+EL6601|1-port communication interface, Ethernet switch port|260
+EL6614|4-port communication interface, Ethernet switch port|310
+EL6631|2-port communication interface, PROFINET RT, controller|400
+EL6631-0010|2-port communication interface, PROFINET RT, device|400
+EL6632|2-port communication interface, PROFINET IRT, controller|400
+EL6633|2-port communication interface, PROFINET RT, controller/I-Device|400
+EL6633-0010|2-port communication interface, PROFINET RT, device|400
+EL6634|2-port communication interface, PROFINET IRT, controller|400
+EL6652|2-port communication interface, EtherNet/IP™, scanner|400
+EL6652-0010|2-port communication interface, EtherNet/IP™, adapter|400
+EL6653|2-port communication interface, EtherNet/IP™, scanner|400
+EL6653-0010|2-port communication interface, EtherNet/IP™, adapter|400
+EL6685|Reference clock, high-precision, distributed clocks|90
+EL6685-0010|Reference clock, high-precision, trimmable, distributed clocks|195|~
+EL6688|1-port communication interface, IEEE 1588/PTP, master/slave|310
+EL6689|1-channel communication interface, GNSS, receiver|310
+EL6692|Communication interface, EtherCAT bridge|120
+EL6695|Communication interface, EtherCAT bridge, extended functions|400
+EL6711-0010|1-channel communication interface, CC-Link, slave|195|~
+EL6720|1-channel communication interface, Lightbus, master|240
+EL6731|1-channel communication interface, PROFIBUS, master/slave|200
+EL6731-0010|1-channel communication interface, PROFIBUS, slave|200
+EL6733|1-channel communication interface, PROFIBUS, master/slave|195|~
+EL6733-0010|1-channel communication interface, PROFIBUS, slave|195|~
+EL6740-0010|1-channel communication interface, INTERBUS, slave|450
+EL6751|1-channel communication interface, CANopen, master/slave|230
+EL6751-0010|1-channel communication interface, CANopen, slave|230
+EL6752|1-channel communication interface, DeviceNet®, master|260
+EL6752-0010|1-channel communication interface, DeviceNet®, slave|260
+EL6753|1-channel communication interface, CANopen, master/slave|195|~
+EL6753-0010|1-channel communication interface, CANopen, slave|195|~
+EL6754|1-channel communication interface, DeviceNet®, master|195|~
+EL6754-0010|1-channel communication interface, DeviceNet®, slave|195|~
+EL6761|1-channel communication interface, ISO 15118 powerline, charge controller|420
+EL6821|1-channel communication interface, DALI-2, master/power supply|80
+EL6851|1-channel communication interface, DMX, master|130
+EL6851-0010|1-channel communication interface, DMX, slave|130
+EL6861|1-channel communication interface, BACnet-MS/TP, RS485, D-sub|170
+EL6900|EtherCAT Terminal communication interface, TwinSAFE Logic|188
+EL6910|EtherCAT Terminal communication interface, TwinSAFE Logic|160
+EL6930|EtherCAT Terminal communication interface, TwinSAFE Logic|188
+EL7031|1-channel motion interface, stepper motor, 24 V DC, 1.5 A|120
+EL7031-0030|1-channel motion interface, stepper motor, 24 V DC, 2.8 A|120
+EL7037|1-channel motion interface, stepper motor, 24 V DC, 1.5 A, with incremental encoder|100
+EL7041|1-channel motion interface, stepper motor, 48 V DC, 5 A, with incremental encoder|140
+EL7041-0052|1-channel motion interface, stepper motor, 48 V DC, 5 A|140
+EL7047|1-channel motion interface, stepper motor, 48 V DC, 5 A, vector control, with incremental encoder|140
+EL7062|2-channel motion interface, stepper motor, 48 V DC, 3 A, with incremental encoder, 5 V DC|175
+EL7201|1-channel motion interface, servomotor, 48 V DC, 2.8 A, resolver|120
+EL7201-0010|1-channel motion interface, servomotor, 48 V DC, 2.8 A, OCT|120
+EL7201-9014|1-channel motion interface, servomotor, 48 V DC, 2.8 A, OCT, suitable for STO applications|120
+EL7211|1-channel motion interface, servomotor, 48 V DC, 4.5 A, resolver|120
+EL7211-0010|1-channel motion interface, servomotor, 48 V DC, 4.5 A, OCT|120
+EL7211-9014|1-channel motion interface, servomotor, 48 V DC, 4.5 A, OCT, suitable for STO applications|120
+EL7221-9014|1-channel motion interface, servomotor, 48 V DC, 8 A, OCT, suitable for STO applications|120
+EL7332|2-channel motion interface, DC motor, 24 V DC, 1 A|140
+EL7342|2-channel motion interface, DC motor, 48 V DC, 3.5 A|140
+EL7411|1-channel motion interface, BLDC motor, 48 V DC, 4.5 A, with incremental encoder|190
+EL8601-8411|12-channel multi-interface, 8 x DI, 1 x CNT, 4 x DO, 2 x PWM, 1 x AI, 1 x AO, 1 x ENC AB|100
+EL9011|End cover, E-bus contacts, gray|0
+EL9012|End cover, power and E-bus contacts, gray|0
+EL9070|Shield|0
+EL9080|Potential group separation|0
+EL9100|Potential supply, 24 V DC, 10 A|0
+EL9110|Potential supply, 24 V DC, 10 A, with diagnostics|90
+EL9150|Potential supply, 120…230 V AC, 10 A|0
+EL9160|Potential supply, 120…230 V AC, 10 A, with diagnostics|55
+EL9180|Potential distribution, 2 x 24 V DC, 2 x 0 V DC, 2 x ⏚|0
+EL9181|Potential distribution, 8 x 2 potentials|0
+EL9182|Potential distribution, 2 x 8 potentials|0
+EL9183|Potential distribution, 16 x 1 potential|0
+EL9184|Potential distribution, 8 x 24 V DC, 8 x 0 V DC|0
+EL9185|Potential distribution, 4 x 24 V DC, 4 x 0 V DC|0
+EL9185-0010|Potential distribution, 4 x 24 V DC, 4 x 0 V DC, potential supply function|0
+EL9186|Potential distribution, 8 x 24 V DC|0
+EL9187|Potential distribution, 8 x 0 V DC|0
+EL9188|Potential distribution, 16 x 24 V DC|0
+EL9189|Potential distribution, 16 x 0 V DC|0
+EL9190|Potential supply, 0…230 V AC/DC, 10 A|0
+EL9195|Shield|0
+EL9200|Potential supply, 24 V DC, replaceable fuses|0
+EL9210|Potential supply, 24 V DC, with diagnostics, replaceable fuses|90
+EL9221-4030|1-channel overcurrent protection, 24 V DC, 3 A|80
+EL9221-5000|1-channel overcurrent protection, 24 V DC, 10 A, adjustable|80
+EL9221-5090|1-channel overcurrent protection, 24 V DC, 10 A|80
+EL9221-6000|1-channel overcurrent protection, 24 V DC, 4 A, adjustable|80
+EL9221-6040|1-channel overcurrent protection, 24 V DC, 4 A|80
+EL9221-9060|1-channel overcurrent protection, 24 V DC, 6 A|80
+EL9221-9080|1-channel overcurrent protection, 24 V DC, 8 A|80
+EL9222-4433|2-channel overcurrent protection, 24 V DC, 3 A/3 A|80
+EL9222-5500|2-channel overcurrent protection, 24 V DC, 10 A, adjustable|80
+EL9222-6600|2-channel overcurrent protection, 24 V DC, 4 A, adjustable|80
+EL9222-6644|2-channel overcurrent protection, 24 V DC, 4 A/4 A|80
+EL9222-9482|2-channel overcurrent protection, 24 V DC, 8 A/2 A|80
+EL9222-9664|2-channel overcurrent protection, 24 V DC, 6 A/4 A|80
+EL9227-0000|2-channel overcurrent protection, 24 V DC, 4 A, adjustable, extended functionalities, Class 2|80
+EL9227-4433|2-channel overcurrent protection, 24 V DC, 3 A/3 A, extended functionalities|80
+EL9227-5500|2-channel overcurrent protection, 24 V DC, 10 A, adjustable, extended functionalities|80
+EL9227-6600|2-channel overcurrent protection, 24 V DC, 4 A, adjustable, extended functionalities|80
+EL9227-6644|2-channel overcurrent protection, 24 V DC, 4 A/4 A, extended functionalities|80
+EL9227-9482|2-channel overcurrent protection, 24 V DC, 8 A/2 A, extended functionalities|80
+EL9227-9664|2-channel overcurrent protection, 24 V DC, 6 A/4 A, extended functionalities|80
+EL9410|Power supply for E-bus, 24 V DC, 2 A, with diagnostics|0
+EL9501|Power supply, 0…20 V DC, 0…2 A|80
+EL9505|Power supply, 5 V DC, 0.5 A|90
+EL9508|Power supply, 8 V DC, 0.5 A|90
+EL9510|Power supply, 10 V DC, 0.5 A|90
+EL9512|Power supply, 12 V DC, 0.5 A|90
+EL9515|Power supply, 15 V DC, 0.5 A|90
+EL9520|Potential supply, ASi, with filter|100
+EL9540|Surge filter, field supply, 10 A|0
+EL9540-0010|Surge filter, field supply, 5 A, with diagnostics|40
+EL9550|Surge filter, system and field supply, 1.5 A/10 A|0
+EL9550-0010|Surge filter, system and field supply, ∑ 10 A, with diagnostics|40
+EL9550-0012|Surge filter, system and field supply, 10 A/10 A|0
+EL9560|Power supply, 24 V DC/24 V DC, 0.1 A, electrically isolated|90
+EL9561|Power supply, 0…20 V DC, 0…2 A, electrically isolated|80
+EL9562|Power supply, 24 V DC, 2 x output 24 V DC, 0.2 A, electrically isolated|60
+EL9562-0015|Power supply, 24 V DC, 2 x output 24 V DC, 0.3 A, electrically isolated|60
+EL9570|Buffering, 48 V DC, 500 µF|0
+EL9576|Brake chopper|80|~
+EL9930|PROFIsafe segment end terminal|120
+ELM2642-0000|2-channel reed output, multiplexer, 48 V AC/DC, 0.5 A, potential-free, 1 x 4|60
+ELM2644-0000|4-channel reed output, multiplexer, 48 V AC/DC, 0.5 A, potential-free, 1 x 4|60
+ELM2742-0000|2-channel solid-state relay output, multiplexer, 48 V AC/DC, 1 A, potential-free, 1 x 4|60
+ELM2744-0000|4-channel solid-state relay output, multiplexer, 48 V AC/DC, 1 A, potential-free, 1 x 4|60
+ELM3002-0000|2-channel analog input, voltage, ±30 V…±20 mV, 24 bit, 20 ksps|330
+ELM3002-0205|2-channel analog input, voltage, ±60 V…1200 V, 24 bit, 50 ksps, electrically isolated, 4 mm socket|460
+ELM3002-0305|2-channel analog input, voltage, ±60 mV…5 V, 24 bit, 50 ksps, electrically isolated, 4 mm socket|460
+ELM3002-0325|2-channel analog input, voltage, ±60 mV…5 V, 24 bit, 50 ksps, electrically isolated, 4 mm socket, factory calibrated|460
+ELM3002-0405|2-channel analog input, voltage, ±60 mV…5 V/±60 V…1200 V, 24 bit, 50 ksps, electrically isolated, 4 mm socket|460
+ELM3002-0425|2-channel analog input, voltage, ±60 mV…5 V/±60 V…1200 V, 24 bit, 50 ksps, electrically isolated, 4 mm socket, factory calibrated|460
+ELM3004-0000|4-channel analog input, voltage, ±30 V…±20 mV, 24 bit, 10 ksps|470
+ELM3102-0000|2-channel analog input, current, ±20 mA, 24 bit, 20 ksps|340
+ELM3102-0100|2-channel analog input, multi-function, ±60 V, ±20 mA, 24 bit, 20 ksps, electrically isolated|390
+ELM3104-0000|4-channel analog input, current, ±20 mA, 24 bit, 10 ksps|490
+ELM3104-0020|4-channel analog input, current, ±20 mA, 24 bit, 10 ksps, factory calibrated|490
+ELM3142-0000|2-channel analog input, multi-function, ±10…±1.25 V, ±20 mA, 24 bit, 1 ksps|250
+ELM3144-0000|4-channel analog input, multi-function, ±10…±1.25 V, ±20 mA, 24 bit, 1 ksps|250
+ELM3146-0000|6-channel analog input, multi-function, ±10…±1.25 V, ±20 mA, 24 bit, 1 ksps|250
+ELM3148-0000|8-channel analog input, multi-function, ±10…±1.25 V, ±20 mA, 24 bit, 1 ksps|270
+ELM3244-0000|4-channel analog input, temperature, RTD, 24 bit, high-precision, 1 ksps|400
+ELM3246-0000|6-channel analog input, temperature, RTD, 24 bit, high-precision, 1 ksps|450
+ELM3344-0000|4-channel analog input, temperature, thermocouple, 24 bit, high-precision, 1 ksps|220
+ELM3344-0003|4-channel analog input, temperature, thermocouple, 24 bit, high-precision, 1 ksps, Mini-TC universal|220
+ELM3348-0000|8-channel analog input, temperature, thermocouple, 24 bit, high-precision, 1 ksps|260
+ELM3348-0003|8-channel analog input, temperature, thermocouple, 24 bit, high-precision, 1 ksps, Mini-TC universal|260
+ELM3502-0000|2-channel analog input, measuring bridge, full/half/quarter bridge, 24 bit, 20 ksps|450
+ELM3504-0000|4-channel analog input, measuring bridge, full/half/quarter bridge, 24 bit, 10 ksps|720
+ELM3542-0000|2-channel analog input, measuring bridge, full/half/quarter bridge, 24 bit, 1 ksps, TEDS|85
+ELM3544-0000|4-channel analog input, measuring bridge, full/half/quarter bridge, 24 bit, 1 ksps|85
+ELM3602-0000|2-channel analog input, IEPE/accelerometer, 24 bit, 50 ksps|460
+ELM3602-0002|2-channel analog input, IEPE/accelerometer, 24 bit, 50 ksps, BNC|460
+ELM3602-0030|2-channel analog input, IEPE/accelerometer, 24 bit, 50 ksps, externally calibrated|460
+ELM3602-0032|2-channel analog input, IEPE/accelerometer, 24 bit, 50 ksps, BNC, externally calibrated|460
+ELM3604-0000|4-channel analog input, IEPE/accelerometer, 24 bit, 20 ksps|650
+ELM3604-0002|4-channel analog input, IEPE/accelerometer, 24 bit, 20 ksps, BNC|650
+ELM3702-0000|2-channel analog input, multi-function, 24 bit, 10 ksps|530
+ELM3702-0101|2-channel analog input, multi-function, 24 bit, 10 ksps, electrically isolated, LEMO|580
+ELM3704-0000|4-channel analog input, multi-function, 24 bit, 10 ksps|890
+ELM3704-0001|4-channel analog input, multi-function, 24 bit, 10 ksps, LEMO|890
+ELM3704-0020|4-channel analog input, multi-function, 24 bit, 10 ksps, factory calibrated|890
+ELM3704-1001|4-channel analog input, multi-function, 24 bit, 10 ksps, TC compensation|890
+ELM7211-0010|1-channel motion interface, servomotor, 48 V DC, 4.5 A, OCT|120
+ELM7211-9016|1-channel motion interface, servomotor, 48 V DC, 4.5 A, OCT, STO, TwinSAFE Logic|120
+ELM7211-9018|1-channel motion interface, servomotor, 48 V DC, 4.5 A, OCT, STO, Safe Motion, TwinSAFE Logic|120
+ELM7212-0010|2-channel motion interface, servomotor, 48 V DC, 4.5 A, OCT|120
+ELM7212-9016|2-channel motion interface, servomotor, 48 V DC, 4.5 A, OCT, STO, TwinSAFE Logic|120
+ELM7212-9018|2-channel motion interface, servomotor, 48 V DC, 4.5 A, OCT, STO, Safe Motion, TwinSAFE Logic|120
+ELM7221-0010|1-channel motion interface, servomotor, 48 V DC, 8 A, OCT|120
+ELM7221-9016|1-channel motion interface, servomotor, 48 V DC, 8 A, OCT, STO, TwinSAFE Logic|120
+ELM7221-9018|1-channel motion interface, servomotor, 48 V DC, 8 A, OCT, STO, Safe Motion, TwinSAFE Logic|120
+ELM7222-0010|2-channel motion interface, servomotor, 48 V DC, 8 A, OCT|120
+ELM7222-9016|2-channel motion interface, servomotor, 48 V DC, 8 A, OCT, STO, TwinSAFE Logic|120
+ELM7222-9018|2-channel motion interface, servomotor, 48 V DC, 8 A, OCT, STO, Safe Motion, TwinSAFE Logic|120
+ELM7231-0010|1-channel motion interface, servomotor, 48 V DC, 16 A, OCT|120
+ELM7231-9016|1-channel motion interface, servomotor, 48 V DC, 16 A, OCT, STO, TwinSAFE Logic|120
+ELM7231-9018|1-channel motion interface, servomotor, 48 V DC, 16 A, OCT, STO, Safe Motion, TwinSAFE Logic|120
+ELM9012|End cover, power and E-bus contacts, black|0
+ELM9410|Power supply for E-bus, 24 V DC, 2 A, with diagnostics|0
+ELX1052|2-channel digital input, NAMUR, Ex i|50
+ELX1054|4-channel digital input, NAMUR, Ex i|70
+ELX1058|8-channel digital input, NAMUR, Ex i|70
+ELX2002|2-channel digital output, 24 V DC, 45 mA, Ex i|45
+ELX2008|8-channel digital output, 24 V DC, 30 mA, Ex i|60
+ELX2792|2-channel solid-state relay output, potential-free, Ex i|55
+ELX3152|2-channel analog input, current, 0/4…20 mA, 16 bit, single-ended, Ex i|85
+ELX3152-0090|2-channel analog input, current, 0/4…20 mA, 16 bit, single-ended, Ex i, TwinSAFE SC|85
+ELX3158|8-channel analog input, current, 4…20 mA, 16 bit, single-ended, Ex i|75
+ELX3181|1-channel analog input, current, 4…20 mA, 16 bit, single-ended, HART, Ex i|85
+ELX3184|4-channel analog input, current, 4…20 mA, 16 bit, single-ended, HART, Ex i|60
+ELX3202|2-channel analog input, temperature, RTD (Pt100), 16 bit, Ex i|70
+ELX3202-0090|2-channel analog input, temperature, RTD (Pt100), 16 bit, Ex i, TwinSAFE SC|70
+ELX3204|4-channel analog input, temperature, RTD (Pt100), 16 bit, Ex i|70
+ELX3204-0090|4-channel analog input, temperature, RTD (Pt100), 16 bit, Ex i, TwinSAFE SC|70
+ELX3252|2-channel analog input, potentiometer, 300 Ω…40 kΩ, 16 bit, Ex i|70
+ELX3312|2-channel analog input, temperature, thermocouple, 16 bit, Ex i|70
+ELX3312-0090|2-channel analog input, temperature, thermocouple, 16 bit, Ex i, TwinSAFE SC|70
+ELX3314|4-channel analog input, temperature, thermocouple, 16 bit, Ex i|70
+ELX3314-0090|4-channel analog input, temperature, thermocouple, 16 bit, Ex i, TwinSAFE SC|70
+ELX3351|1-channel analog input, measuring bridge, full bridge, 24 bit, Ex i|85
+ELX3351-0090|1-channel analog input, measuring bridge, full bridge, 24 bit, Ex i, TwinSAFE SC|85
+ELX3632|2-channel analog input, IEPE/accelerometer, 16 bit, Ex i|50
+ELX4154|4-channel analog output, current, 0/4…20 mA, 16 bit, single-ended, Ex i|60
+ELX4181|1-channel analog output, current, 0/4…20 mA, 16 bit, single-ended, HART, Ex i|95
+ELX4184|4-channel analog output, current, 4…20 mA, 16 bit, single-ended, HART, Ex i|70
+ELX5151|1-channel encoder interface, incremental, NAMUR, Ex i|80
+ELX5151-0090|1-channel encoder interface, incremental, NAMUR, Ex i, TwinSAFE SC|80
+ELX6233|2-channel communication interface, Ethernet-APL, Ex i|195|~
+ELX9012|End cover, power and E-bus contacts, blue|0
+ELX9410|Power supply for E-bus, 24 V DC, 1 A, with diagnostics|80|~
+ELX9560|Power supply, 24 V DC, 0.65 A, electrically isolated, with diagnostics|40
+EM2042|16-channel digital output, 24 V DC, 0.5 A, D-sub|115
+EM3701|1-channel analog input, differential pressure, ±100 hPa (±100 mbar)|70
+EM3702|2-channel analog input, relative pressure, 0…7500 hPa (0…+7.5 bar)|60
+EM3712|2-channel analog input, relative pressure, ±1000 hPa (-1…+1 bar)|70
+EM7004|EtherCAT Terminal module, 4-channel motion interface, axis/servo drive, 24 V DC|280
+EP1008-0001|EtherCAT Box, 8-channel digital input, 24 V DC, 3 ms, M8|0
+EP1008-0002|EtherCAT Box, 8-channel digital input, 24 V DC, 3 ms, M12|0
+EP1008-0022|EtherCAT Box, 8-channel digital input, 24 V DC, 3 ms, M12|0
+EP1008-0701|EtherCAT Box, 8-channel digital input, ID switch, 24 V DC, 3 ms, M8|0
+EP1018-0001|EtherCAT Box, 8-channel digital input, 24 V DC, 10 µs, M8|0
+EP1018-0002|EtherCAT Box, 8-channel digital input, 24 V DC, 10 µs, M12|0
+EP1018-4002|EtherCAT Box, 8-channel digital input, 24 V DC, 10 µs, M12, GNDs/GNDp|0
+EP1098-0001|EtherCAT Box, 8-channel digital input, 24 V DC, 10 µs, ground switching, M8|0
+EP1111-0000|EtherCAT Box, ID switch|0
+EP1122-0001|EtherCAT Box, 2-port junction, M8|0
+EP1122-8001|EtherCAT Box, 2-port junction, M8, Fast Hot Connect|0
+EP1258-0001|EtherCAT Box, 8-channel digital input, 24 V DC, 1 µs, M8, timestamp|0
+EP1258-0002|EtherCAT Box, 8-channel digital input, 24 V DC, 10 µs, M12, timestamp|0
+EP1258-0502|EtherCAT Box, 8-channel digital input, 24 V DC, 1 µs, M12, multi-timestamp|0
+EP1312-0001|EtherCAT Box, 2-port junction, EtherCAT P, M8|0
+EP1518-0002|EtherCAT Box, 2-channel digital input, counter, 24 V DC, 1 kHz, M12|0
+EP1809-0021|EtherCAT Box, 16-channel digital input, 24 V DC, 3 ms, M8|0
+EP1809-0022|EtherCAT Box, 16-channel digital input, 24 V DC, 3 ms, M12|0
+EP1809-0042|EtherCAT Box, 16-channel digital input, 24 V DC, 3 ms, M12|0
+EP1816-0003|EtherCAT Box, 16-channel digital input, 24 V DC, 10 µs, IP20 connector|0
+EP1816-0008|EtherCAT Box, 16-channel digital input, 24 V DC, 10 µs, D-sub|0
+EP1816-0703|EtherCAT Box, 16-channel digital input, ID switch, 24 V DC, 10 µs, IP20 connector|0
+EP1816-1008|EtherCAT Box, 16-channel digital input, 24 V DC, 10 µs, D-sub, changed pin assignment|0
+EP1816-3008|EtherCAT Box, 16-channel digital input, 24 V DC, 10 µs, D-sub, 2 x 3-axis accelerometers|0
+EP1819-0005|EtherCAT Box, 16-channel digital input, 24 V DC, 10 µs, M8, 4-pin|0
+EP1819-0021|EtherCAT Box, 16-channel digital input, 24 V DC, 10 µs, M8|0
+EP1819-0022|EtherCAT Box, 16-channel digital input, 24 V DC, 10 µs, M12|0
+EP1839-0022|EtherCAT Box, 16-channel digital input, 24 V DC, M12, with extended diagnostics|0
+EP1839-0042|EtherCAT Box, 16-channel digital input, 24 V DC, M12, with extended diagnostics|0
+EP1859-0042|EtherCAT Box, 8-channel digital input + 8-channel digital output, 24 V DC, 3 ms, 0.5 A, M12|0
+EP1908-0002|EtherCAT Box, 8-channel digital input, 24 V DC, M12, TwinSAFE|0
+EP1918-0002|EtherCAT Box, 8-channel digital input, 24 V DC, M12, TwinSAFE, TwinSAFE Logic|0
+EP1957-0022|EtherCAT Box, 8-channel digital input + 4-channel digital output, 24 V DC, 0.5 A, M12, TwinSAFE, TwinSAFE Logic|0
+EP2008-0001|EtherCAT Box, 8-channel digital output, 24 V DC, 0.5 A, M8|0
+EP2008-0002|EtherCAT Box, 8-channel digital output, 24 V DC, 0.5 A, M12|0
+EP2008-0022|EtherCAT Box, 8-channel digital output, 24 V DC, 0.5 A, M12|0
+EP2008-0701|EtherCAT Box, 8-channel digital output, ID switch, 24 V DC, 0.5 A, M8|0
+EP2028-0001|EtherCAT Box, 8-channel digital output, 24 V DC, 2 A, M8|0
+EP2028-0002|EtherCAT Box, 8-channel digital output, 24 V DC, 2 A, M12|0
+EP2028-0032|EtherCAT Box, 8-channel digital output, 24 V DC, 2.8 A, M12|0
+EP2038-0001|EtherCAT Box, 8-channel digital output, 24 V DC, 2 A, M8, with diagnostics|0
+EP2038-0002|EtherCAT Box, 8-channel digital output, 24 V DC, 2 A, M12, with diagnostics|0
+EP2038-0042|EtherCAT Box, 8-channel digital output, 24 V DC, 2 A, M12, with extended diagnostics|0
+EP2308-0001|EtherCAT Box, 4-channel digital input + 4-channel digital output, 24 V DC, 3 ms, 0.5 A, M8|0
+EP2308-0002|EtherCAT Box, 4-channel digital input + 4-channel digital output, 24 V DC, 3 ms, 0.5 A, M12|0
+EP2316-0003|EtherCAT Box, 8-channel digital input + 8-channel digital output, 24 V DC, 10 µs, 0.5 A, IP20 connector|0
+EP2316-0008|EtherCAT Box, 8-channel digital input + 8-channel digital output, 24 V DC, 10 µs, 0.5 A, D-sub|0
+EP2318-0001|EtherCAT Box, 4-channel digital input + 4-channel digital output, 24 V DC, 10 µs, 0.5 A, M8|0
+EP2318-0002|EtherCAT Box, 4-channel digital input + 4-channel digital output, 24 V DC, 10 µs, 0.5 A, M12|0
+EP2328-0001|EtherCAT Box, 4-channel digital input + 4-channel digital output, 24 V DC, 3 ms, 2 A, M8|0
+EP2328-0002|EtherCAT Box, 4-channel digital input + 4-channel digital output, 24 V DC, 3 ms, 2 A, M12|0
+EP2338-0001|EtherCAT Box, 8-channel digital combi, 24 V DC, 10 µs, 0.5 A, M8|0
+EP2338-0002|EtherCAT Box, 8-channel digital combi, 24 V DC, 10 µs, 0.5 A, M12|0
+EP2338-1001|EtherCAT Box, 8-channel digital combi, 24 V DC, 3 ms, 0.5 A, M8|0
+EP2338-1002|EtherCAT Box, 8-channel digital combi, 24 V DC, 3 ms, 0.5 A, M12|0
+EP2338-2002|EtherCAT Box, 8-channel digital combi, 24 V DC, 10 µs, 0.5 A, M12|0
+EP2338-3002|EtherCAT Box, 8-channel digital combi, 24 V DC, 10 µs, 0.5 A, M12, with ⏚|0
+EP2339-0003|EtherCAT Box, 16-channel digital combi, 24 V DC, 3 ms, 0.5 A, IP20 connector|0
+EP2339-0021|EtherCAT Box, 16-channel digital combi, 24 V DC, 3 ms, 0.5 A, M8|0
+EP2339-0022|EtherCAT Box, 16-channel digital combi, 24 V DC, 3 ms, 0.5 A, M12|0
+EP2339-0042|EtherCAT Box, 16-channel digital combi, 24 V DC, 3 ms, 0.5 A, M12|0
+EP2339-0121|EtherCAT Box, 16-channel digital combi, 24 V DC, 3 ms, 0.5 A, ground switching, M8|0
+EP2339-0703|EtherCAT Box, 16-channel digital combi, ID switch, 24 V DC, 3 ms, 0.5 A, IP20 connector|0
+EP2349-0021|EtherCAT Box, 16-channel digital combi, 24 V DC, 10 µs, 0.5 A, M8|0
+EP2349-0022|EtherCAT Box, 16-channel digital combi, 24 V DC, 10 µs, 0.5 A, M12|0
+EP2534-0002|EtherCAT Box, 4-channel PWM output, 24 V DC, 2 A, M12, current-controlled|0
+EP2624-0002|EtherCAT Box, 4-channel relay output, 25 V AC, 30 V DC, 0.5 A AC, 2 A DC, M12|0
+EP2809-0021|EtherCAT Box, 16-channel digital output, 24 V DC, 0.5 A, M8|0
+EP2809-0022|EtherCAT Box, 16-channel digital output, 24 V DC, 0.5 A, M12|0
+EP2809-0042|EtherCAT Box, 16-channel digital output, 24 V DC, 0.5 A, M12|0
+EP2816-0003|EtherCAT Box, 16-channel digital output, 24 V DC, 0.5 A, IP20 connector|0
+EP2816-0004|EtherCAT Box, 16-channel digital output, 24 V DC, 0.5 A, M16|0
+EP2816-0008|EtherCAT Box, 16-channel digital output, 24 V DC, 0.5 A, D-sub|0
+EP2816-0010|EtherCAT Box, 16-channel digital output, 24 V DC, 0.5 A, D-sub|0
+EP2816-0703|EtherCAT Box, 16-channel digital output, ID switch, 24 V DC, 0.5 A, IP20 connector|0
+EP2817-0008|EtherCAT Box, 24-channel digital output, 24 V DC, 0.5 A, D-sub|0
+EP2839-0022|EtherCAT Box, 16-channel digital output, 24 V DC, 0.5 A, M12, with extended diagnostics|0
+EP2839-0042|EtherCAT Box, 16-channel digital output, 24 V DC, 0.5 A, M12, with extended diagnostics|0
+EP2918-0032|EtherCAT Box, 8-channel digital output, 24 V DC, 2 A, M12, TwinSAFE, TwinSAFE Logic|0
+EP3048-0002|EtherCAT Box, 8-channel analog input, current, ±20 mA, 16 bit, single-ended, 2 ksps, M12|0
+EP3048-1002|EtherCAT Box, 8-channel analog input, current, ±20 mA, 16 bit, single-ended, 2 ksps, M12, sensor supply via US|0
+EP3162-0002|EtherCAT Box, 2-channel analog input, multi-function, ±10 V, ±20 mA, 16 bit, single-ended, electrically isolated, M12|0
+EP3174-0002|EtherCAT Box, 4-channel analog input, multi-function, ±10 V, 0/4…20 mA, 16 bit, differential, M12|0
+EP3174-0092|EtherCAT Box, 4-channel analog input, multi-function, ±10 V, 0/4…20 mA, 16 bit, differential, M12, TwinSAFE SC|0
+EP3182-1002|EtherCAT Box, 2-channel analog input + 2-channel digital output, multi-function, ±10 V, 0/4…20 mA, 16 bit, single-ended, M12|0
+EP3184-0002|EtherCAT Box, 4-channel analog input, multi-function, ±10 V, 0/4…20 mA, 16 bit, single-ended, M12|0
+EP3184-1002|EtherCAT Box, 4-channel analog input, multi-function, ±10 V, 0/4…20 mA, 16 bit, single-ended, M12|0
+EP3204-0002|EtherCAT Box, 4-channel analog input, temperature, RTD (Pt100), 16 bit, M12|0
+EP3314-0002|EtherCAT Box, 4-channel analog input, temperature, thermocouple, 16 bit, M12|0
+EP3314-0702|EtherCAT Box, 4-channel analog input, ID switch, temperature, thermocouple, 16 bit, M12|0
+EP3356-0022|EtherCAT Box, 1-channel analog input, measuring bridge, full bridge, 24 bit, M12|0
+EP3632-0001|EtherCAT Box, 2-channel analog input, IEPE/accelerometer, 16 bit, 50 ksps, M8|0
+EP3744-0041|EtherCAT Box, 4-channel analog input + 8-channel digital combi, pressure, 0…1000 hPa (0…+1 bar), M8|0
+EP3744-1041|EtherCAT Box, 4-channel analog input + 8-channel digital combi, pressure, 0…7000 hPa (0…+7 bar), M8|0
+EP3744-2041|EtherCAT Box, 4-channel analog input + 8-channel digital combi, pressure, 0…1000 hPa (0…+1 bar), high-precision, M8|0
+EP3744-3041|EtherCAT Box, 4-channel analog input + 8-channel digital combi, pressure, 0…12000 hPa (0…+12 bar), M8|0
+EP3751-0160|EtherCAT Box, 1-channel, 1 x 3-axis accelerometers|0
+EP3751-0260|EtherCAT Box, 1-channel, 1 x 3-axis accelerometer, 1 x 3-axis gyroscope|0
+EP3752-0000|EtherCAT Box, 2-channel, 2 x 3-axis accelerometers|0
+EP3754-0002|EtherCAT Box, 4-channel analog input, multi-function, M12|0
+EP3754-0702|EtherCAT Box, 4-channel analog input, ID switch, multi-function, M12|0
+EP4174-0002|EtherCAT Box, 4-channel analog output, multi-function, ±10 V, 0/4…20 mA, 16 bit, differential, M12|0
+EP4304-1002|EtherCAT Box, 2-channel analog input + 2-channel analog output, voltage, ±10 V, 16 bit, single-ended, M12, 2 x digital input 24 V DC|0
+EP4314-1002|EtherCAT Box, 2-channel analog input + 2-channel analog output, multi-function, ±20 mA, 16 bit, single-ended, M12|0
+EP4374-0002|EtherCAT Box, 2-channel analog input + 2-channel analog output, multi-function, ±10 V, 0/4…20 mA, 16 bit, differential, M12|0
+EP4378-1022|EtherCAT Box, 4-channel analog input + 4-channel analog output, multi-function, ±10 V, 0/4…±20 mA, 16 bit, single-ended, M12|0
+EP5001-0002|EtherCAT Box, 1-channel encoder interface, SSI, M12|0
+EP5101-0002|EtherCAT Box, 1-channel encoder interface, incremental, 5 V DC (DIFF RS422, TTL), 1 MHz, M12|0
+EP5101-0011|EtherCAT Box, 1-channel encoder interface, incremental, 5 V DC (DIFF RS422, TTL), 1 MHz, D-sub|0
+EP5101-1002|EtherCAT Box, 1-channel encoder interface, incremental, 5 V DC (DIFF RS422, TTL), 1 MHz, M12, sensor supply 24 V DC|0
+EP5101-2011|EtherCAT Box, 1-channel encoder interface, incremental, 5 V DC (DIFF RS422, TTL), 5 MHz, D-sub|0
+EP5151-0002|EtherCAT Box, 1-channel encoder interface, incremental, 24 V DC HTL, 100 kHz, M12|0
+EP6001-0002|EtherCAT Box, 1-channel communication interface, serial, RS232/RS422/RS485, M12|0
+EP6002-0002|EtherCAT Box, 2-channel communication interface, serial, RS232/RS422/RS485, M12|0
+EP6070-0060|EtherCAT Box, license key for TwinCAT 3.1|0
+EP6080-0000|EtherCAT Box, 1-channel communication interface, memory, 128 kByte, NOVRAM|0
+EP6090-0000|EtherCAT Box, display with navigation switch, operating hours counter|0
+EP6222-0002|EtherCAT Box, 2-channel communication interface + 2-channel digital input, IO-Link, master, Class A, M12|0
+EP6224-0002|EtherCAT Box, 4-channel communication interface + 4-channel digital input, IO-Link, master, Class A, M12|0
+EP6224-0042|EtherCAT Box, 4-channel communication interface + 8-channel digital input, IO-Link, master, Class A, M12|0
+EP6224-0092|EtherCAT Box, 4-channel communication interface + 4-channel digital input, IO-Link, master, Class A, M12, TwinSAFE SC|0
+EP6224-2022|EtherCAT Box, 4-channel communication interface, IO-Link, master, Class A, M12|0
+EP6224-3002|EtherCAT Box, 4-channel communication interface, IO-Link, master, Class B, M12|0
+EP6224-3022|EtherCAT Box, 4-channel communication interface, IO-Link, master, Class B, M12|0
+EP6228-0022|EtherCAT Box, 8-channel communication interface, IO-Link, master, Class A, M12|0
+EP6228-0042|EtherCAT Box, 8-channel communication interface + 8-channel digital input, IO-Link, master, Class A, M12|0
+EP6228-0044|EtherCAT Box, 8-channel communication interface + 8-channel digital combi, IO-Link, master, Class A, M12, L-coded|0
+EP6228-3032|EtherCAT Box, 8-channel communication interface, IO-Link, master, Class B, M12|0
+EP6228-3034|EtherCAT Box, 8-channel communication interface, IO-Link, master, Class B, M12, L-coded|0
+EP6228-3132|EtherCAT Box, 8-channel communication interface + 4-channel digital input, IO-Link, master, Class A, Class B, M12|0
+EP6228-3142|EtherCAT Box, 8-channel communication interface + 4-channel digital input, IO-Link, master, Class A, Class B, M12|0
+EP6601-0002|EtherCAT Box, 1-port communication interface, Ethernet switch port|0
+EP7041-0002|EtherCAT Box, 1-channel motion interface, stepper motor, 48 V DC, 5 A, M12, with incremental encoder|0
+EP7041-1002|EtherCAT Box, 1-channel motion interface, stepper motor, 48 V DC, 1.5 A, M12, with incremental encoder|0
+EP7041-2002|EtherCAT Box, 1-channel motion interface, stepper motor, 48 V DC, 5 A, M12, with incremental encoder|0
+EP7041-3002|EtherCAT Box, 1-channel motion interface, stepper motor, 48 V DC, 5 A, for high-speed applications, M12, with incremental encoder|0
+EP7041-3102|EtherCAT Box, 1-channel motion interface, stepper motor, 48 V DC, 5 A, for high-speed applications, M12, with incremental encoder|0
+EP7041-4032|EtherCAT Box, 1-channel motion interface, stepper motor, 48 V DC, 5 A, for high-speed applications, M12, with BiSS® C encoder|0
+EP7047-1032|EtherCAT Box, 1-channel motion interface, stepper motor, 48 V DC, 5 A, vector control, M12, with incremental encoder|0
+EP7211-0034|EtherCAT Box, 1-channel motion interface, servomotor, 48 V DC, 4.5 A, OCT, suitable for STO applications|0
+EP7211-0035|EtherCAT Box, 1-channel motion interface, servomotor, 48 V DC, 4.5 A, OCT, suitable for STO applications|0
+EP7342-0002|EtherCAT Box, 2-channel motion interface, DC motor, 48 V DC, 3.5 A, M12, with incremental encoder|0
+EP7402-0057|EtherCAT Box, 2-channel motion interface, BLDC motor, 24 V DC, 3.5 A, M8, EtherCAT junction|0
+EP7402-0067|EtherCAT Box, 2-channel motion interface, BLDC motor, 48 V DC, 3.5 A, M8, EtherCAT junction|0
+EP7402-0167|EtherCAT Box, 2-channel motion interface, BLDC motor, 48 V DC, 3.5 A, M8|0
+EP7412-0071|EtherCAT Box, 2-channel motion interface, BLDC motor, 48 V DC, 4 A|0
+EP7412-9071|EtherCAT Box, 2-channel motion interface, BLDC motor, 48 V DC, 4 A, STO, TwinSAFE Logic|0
+EP7414-0071|EtherCAT Box, 4-channel motion interface, BLDC motor, 48 V DC, 4 A|0
+EP7414-9071|EtherCAT Box, 4-channel motion interface, BLDC motor, 48 V DC, 4 A, STO, TwinSAFE Logic|0
+EP8309-1022|EtherCAT Box, multi-functional box, digital, analog, PWM, current-controlled, M12|0
+EP8601-0022|EtherCAT Box, 12-channel multi-interface, 8 x DI, 1 x CNT, 4 x DO, 2 x PWM, 1 x AI, 1 x AO, 1 x ENC AB|0
+EP9128-0021|EtherCAT Box, 8-port junction, EtherCAT, 100 Mbit/s, 24 V DC, M8|0
+EP9208-1035|EtherCAT Box, 8-channel power distribution, passive, M12, L-coded|0
+EP9214-0023|EtherCAT Box, 4/4-channel power distribution, for EtherCAT Box modules|0
+EP9214-0024|EtherCAT Box, 4/4-channel power distribution, for EtherCAT Box modules, M12, L-coded|0
+EP9224-0023|EtherCAT Box, 4/4-channel power distribution, for EtherCAT Box modules, with current measurement/data logging|0
+EP9224-0024|EtherCAT Box, 4/4-channel power distribution, for EtherCAT Box modules, with current measurement/data logging, M12, L-coded|0
+EP9224-0037|EtherCAT Box, 4-channel power distribution, ENP to EtherCAT P|0
+EP9224-2037|EtherCAT Box, 4-port junction, with power supply, ENP, B17|0
+EP9300-0022|EtherCAT Box, PROFINET RT|0
+EP9521-0020|EtherCAT Box, media converter, Ethernet/EtherCAT, 100 Mbit/s, 24 V DC|0
+EP9576-1032|EtherCAT Box, brake chopper, 7/8"|0
+EP9576-1034|EtherCAT Box, brake chopper, M12, L-coded|0
+EPP1004-0061|EtherCAT P Box, 4-channel digital input, 24 V DC, 3 ms, M8|0
+EPP1008-0001|EtherCAT P Box, 8-channel digital input, 24 V DC, 3 ms, M8|0
+EPP1008-0002|EtherCAT P Box, 8-channel digital input, 24 V DC, 3 ms, M12|0
+EPP1008-0022|EtherCAT P Box, 8-channel digital input, 24 V DC, 3 ms, M12|0
+EPP1018-0001|EtherCAT P Box, 8-channel digital input, 24 V DC, 10 µs, M8|0
+EPP1018-0002|EtherCAT P Box, 8-channel digital input, 24 V DC, 10 µs, M12|0
+EPP1098-0001|EtherCAT P Box, 8-channel digital input, 24 V DC, 10 µs, ground switching, M8|0
+EPP1111-0000|EtherCAT P Box, ID switch|0
+EPP1258-0001|EtherCAT P Box, 8-channel digital input, 24 V DC, 10 µs, M8, timestamp|0
+EPP1258-0002|EtherCAT P Box, 8-channel digital input, 24 V DC, 10 µs, M12, timestamp|0
+EPP1321-0060|EtherCAT P Box, 1-port EtherCAT-to-EtherCAT P feed-in|0
+EPP1322-0001|EtherCAT P Box, 2-port EtherCAT-to-EtherCAT P feed-in|0
+EPP1332-0001|EtherCAT P Box, 2-port EtherCAT P junction, with refresh|0
+EPP1342-0001|EtherCAT P Box, 2-port EtherCAT P junction|0
+EPP1518-0002|EtherCAT P Box, 8-channel digital input, counter, 24 V DC, 1 kHz, M12|0
+EPP1809-0021|EtherCAT P Box, 16-channel digital input, 24 V DC, 3 ms, M8|0
+EPP1809-0022|EtherCAT P Box, 16-channel digital input, 24 V DC, 3 ms, M12|0
+EPP1816-0003|EtherCAT P Box, 16-channel digital input, 24 V DC, 10 µs, IP20 connector|0
+EPP1816-0008|EtherCAT P Box, 16-channel digital input, 24 V DC, 10 µs, D-sub|0
+EPP1816-0703|EtherCAT P Box, 16-channel digital input, ID switch, 24 V DC, 10 µs, IP20 connector|0
+EPP1816-3008|EtherCAT P Box, 16-channel digital input, 24 V DC, 10 µs, D-sub, 2 x 3-axis accelerometers|0
+EPP1819-0005|EtherCAT P Box, 16-channel digital input, 24 V DC, 10 µs, M8, 4-pin|0
+EPP1819-0021|EtherCAT P Box, 16-channel digital input, 24 V DC, 10 µs, M8|0
+EPP1819-0022|EtherCAT P Box, 16-channel digital input, 24 V DC, 10 µs, M12|0
+EPP1839-0022|EtherCAT P Box, 16-channel digital input, 24 V DC, M12, with extended diagnostics|0
+EPP1859-0022|EtherCAT P Box, 8-channel digital input + 8-channel digital output, 24 V DC, 3 ms, 0.5 A, M12|0
+EPP2008-0001|EtherCAT P Box, 8-channel digital output, 24 V DC, 0.5 A, M8|0
+EPP2008-0002|EtherCAT P Box, 8-channel digital output, 24 V DC, 0.5 A, M12|0
+EPP2008-0022|EtherCAT P Box, 8-channel digital output, 24 V DC, 0.5 A, M12|0
+EPP2028-0001|EtherCAT P Box, 8-channel digital output, 24 V DC, 2 A, M8|0
+EPP2028-0002|EtherCAT P Box, 8-channel digital output, 24 V DC, 2 A, M12|0
+EPP2038-0001|EtherCAT P Box, 8-channel digital output, 24 V DC, 2 A, M8, with diagnostics|0
+EPP2038-0002|EtherCAT P Box, 8-channel digital output, 24 V DC, 2 A, M12, with diagnostics|0
+EPP2308-0001|EtherCAT P Box, 4-channel digital input + 4-channel digital output, 24 V DC, 3 ms, 0.5 A, M8|0
+EPP2308-0002|EtherCAT P Box, 4-channel digital input + 4-channel digital output, 24 V DC, 3 ms, 0.5 A, M12|0
+EPP2316-0003|EtherCAT P Box, 8-channel digital input + 8-channel digital output, 24 V DC, 10 µs, 0.5 A, IP20 connector|0
+EPP2316-0008|EtherCAT P Box, 8-channel digital input + 8-channel digital output, 24 V DC, 10 µs, 0.5 A, D-sub|0
+EPP2318-0001|EtherCAT P Box, 4-channel digital input + 4-channel digital output, 24 V DC, 10 µs, 0.5 A, M8|0
+EPP2318-0002|EtherCAT P Box, 4-channel digital input + 4-channel digital output, 24 V DC, 10 µs, 0.5 A, M12|0
+EPP2328-0001|EtherCAT P Box, 4-channel digital input + 4-channel digital output, 24 V DC, 3 ms, 2 A, M8|0
+EPP2328-0002|EtherCAT P Box, 4-channel digital input + 4-channel digital output, 24 V DC, 3 ms, 2 A, M12|0
+EPP2334-0061|EtherCAT P Box, 4-channel digital combi, 24 V DC, 10 µs, 0.5 A, M8|0
+EPP2338-0001|EtherCAT P Box, 8-channel digital combi, 24 V DC, 10 µs, 0.5 A, M8|0
+EPP2338-0002|EtherCAT P Box, 8-channel digital combi, 24 V DC, 10 µs, 0.5 A, M12|0
+EPP2338-1001|EtherCAT P Box, 8-channel digital combi, 24 V DC, 3 ms, 0.5 A, M8|0
+EPP2338-1002|EtherCAT P Box, 8-channel digital combi, 24 V DC, 3 ms, 0.5 A, M12|0
+EPP2338-2002|EtherCAT P Box, 8-channel digital combi, 24 V DC, 10 µs, 0.5 A, M12|0
+EPP2339-0003|EtherCAT P Box, 16-channel digital combi, 24 V DC, 3 ms, 0.5 A, IP20 connector|0
+EPP2339-0021|EtherCAT P Box, 16-channel digital combi, 24 V DC, 3 ms, 0.5 A, M8|0
+EPP2339-0022|EtherCAT P Box, 16-channel digital combi, 24 V DC, 3 ms, 0.5 A, M12|0
+EPP2339-0703|EtherCAT P Box, 16-channel digital combi, ID switch, 24 V DC, 3 ms, 0.5 A, IP20 connector|0
+EPP2349-0021|EtherCAT P Box, 16-channel digital combi, 24 V DC, 10 µs, 0.5 A, M8|0
+EPP2349-0022|EtherCAT P Box, 16-channel digital combi, 24 V DC, 10 µs, 0.5 A, M12|0
+EPP2596-0002|EtherCAT P Box, 1-channel LED output, 0…24 V DC, 3 A, M12|0
+EPP2624-0002|EtherCAT P Box, 4-channel relay output, 25 V AC, 30 V DC, 0.5 A AC, 2 A DC, M12|0
+EPP2809-0021|EtherCAT P Box, 16-channel digital output, 24 V DC, 0.5 A, M8|0
+EPP2809-0022|EtherCAT P Box, 16-channel digital output, 24 V DC, 0.5 A, M12|0
+EPP2816-0003|EtherCAT P Box, 16-channel digital output, 24 V DC, 0.5 A, IP20 connector|0
+EPP2816-0004|EtherCAT P Box, 16-channel digital output, 24 V DC, 0.5 A, M16|0
+EPP2816-0008|EtherCAT P Box, 16-channel digital output, 24 V DC, 0.5 A, D-sub|0
+EPP2816-0010|EtherCAT P Box, 16-channel digital output, 24 V DC, 0.5 A, D-sub|0
+EPP2817-0008|EtherCAT P Box, 24-channel digital output, 24 V DC, 0.5 A, D-sub|0
+EPP2839-0022|EtherCAT P Box, 16-channel digital output, 24 V DC, 0.5 A, M12, with extended diagnostics|0
+EPP3048-0002|EtherCAT P Box, 8-channel analog input, current, ±20 mA, 16 bit, single-ended, 2 ksps, M12|0
+EPP3174-0002|EtherCAT P Box, 4-channel analog input, multi-function, ±10 V, 0/4…20 mA, 16 bit, differential, M12|0
+EPP3184-0002|EtherCAT P Box, 4-channel analog input, multi-function, ±10 V, 0/4…20 mA, 16 bit, single-ended, M12|0
+EPP3184-0802|EtherCAT P Box, 4-channel analog input, current, 4…20 mA, 16 bit, single-ended, M12, HART|0
+EPP3204-0002|EtherCAT P Box, 4-channel analog input, temperature, RTD (Pt100), 16 bit, M12|0
+EPP3314-0002|EtherCAT P Box, 4-channel analog input, temperature, thermocouple, 16 bit, M12|0
+EPP3356-0022|EtherCAT P Box, 1-channel analog input, measuring bridge, full bridge, 24 bit, M12|0
+EPP3504-0023|EtherCAT P Box, 4-channel analog input, measuring bridge, full/half/quarter bridge, 24 bit, 10 ksps, IP20 connector|0
+EPP3632-0001|EtherCAT P Box, 2-channel analog input, IEPE/accelerometer, 16 bit, 50 ksps, M8|0
+EPP3744-0041|EtherCAT P Box, 4-channel analog input + 8-channel digital combi, pressure, 0…1000 hPa (0…+1 bar), M8|0
+EPP3744-1041|EtherCAT P Box, 4-channel analog input + 8-channel digital combi, pressure, 0…7000 hPa (0…+7 bar), M8|0
+EPP3752-0000|EtherCAT P Box, 2-channel, 2 x 3-axis accelerometers|0
+EPP3754-0002|EtherCAT P Box, 4-channel analog input, multi-function, M12|0
+EPP3754-0702|EtherCAT P Box, 4-channel analog input, ID switch, multi-function, M12|0
+EPP4174-0002|EtherCAT P Box, 4-channel analog output, multi-function, ±10 V, 0/4…20 mA, 16 bit, differential, M12|0
+EPP4304-1002|EtherCAT P Box, 2-channel analog input + 2-channel analog output, voltage, ±10 V, 16 bit, single-ended, M12, 2 x digital input 24 V DC|0
+EPP4314-1002|EtherCAT P Box, 2-channel analog input + 2-channel analog output, multi-function, ±20 mA, 16 bit, differential, M12|0
+EPP4374-0002|EtherCAT P Box, 2-channel analog input + 2-channel analog output, multi-function, ±10 V, 0/4…20 mA, 16 bit, differential, M12|0
+EPP5001-0002|EtherCAT P Box, 1-channel encoder interface, SSI, M12|0
+EPP5101-0002|EtherCAT P Box, 1-channel encoder interface, incremental, 5 V DC (DIFF RS422, TTL), 1 MHz, M12|0
+EPP5101-0011|EtherCAT P Box, 1-channel encoder interface, incremental, 5 V DC (DIFF RS422, TTL), 1 MHz, D-sub|0
+EPP5101-1002|EtherCAT P Box, 1-channel encoder interface, incremental, 5 V DC (DIFF RS422, TTL), 1 MHz, M12, sensor supply 24 V DC|0
+EPP5151-0002|EtherCAT P Box, 1-channel encoder interface, incremental, 24 V DC HTL, 100 kHz, M12|0
+EPP6001-0002|EtherCAT P Box, 1-channel communication interface, serial, RS232/RS422/RS485, M12|0
+EPP6002-0002|EtherCAT P Box, 2-channel communication interface, serial, RS232/RS422/RS485, M12|0
+EPP6090-0000|EtherCAT P Box, display with navigation switch, operating hours counter|0
+EPP6224-0002|EtherCAT P Box, 4-channel communication interface + 4-channel digital input, IO-Link, master, Class A, M12|0
+EPP6224-0522|EtherCAT P Box, 4-channel communication interface + 12-channel digital combi, IO-Link, master, Class A, M12, timestamp|0
+EPP6228-0022|EtherCAT P Box, 8-channel communication interface + 8-channel digital input, IO-Link, master, Class A, M12|0
+EPP7041-1002|EtherCAT P Box, 1-channel motion interface, stepper motor, 48 V DC, 1.5 A, M12, with incremental encoder|0
+EPP7041-3002|EtherCAT P Box, 1-channel motion interface, stepper motor, 48 V DC, 5 A, for high-speed applications, M12, with incremental encoder|0
+EPP7342-0002|EtherCAT P Box, 2-channel motion interface, DC motor, 48 V DC, 3.5 A, M12, with incremental encoder|0
+EPP9001-0060|EtherCAT P/EtherCAT connector, with power transmission|0
+EPP9022-0060|EtherCAT P Box, with voltage diagnostics|0
+EPP9022-9060|EtherCAT P Box, with voltage diagnostics, TwinSAFE SC|0
+KL1002|2-channel digital input, 24 V DC, 3 ms|3
+KL1012|2-channel digital input, 24 V DC, 0.2 ms|3
+KL1032|2-channel digital input, 48 V DC, 3 ms|3
+KL1052|2-channel digital input, 24 V DC, 3 ms, positive/ground switching|8
+KL1104|4-channel digital input, 24 V DC, 3 ms, 2-/3-wire connection|5
+KL1114|4-channel digital input, 24 V DC, 0.2 ms, 2-/3-wire connection|5
+KL1124|4-channel digital input, 5 V DC, 0.2 ms|5
+KL1154|4-channel digital input, 24 V DC, 3 ms, positive/ground switching|8
+KL1164|4-channel digital input, 24 V DC, 0.2 ms, positive/ground switching|8
+KL1184|4-channel digital input, 24 V DC, 3 ms, ground switching|8
+KL1194|4-channel digital input, 24 V DC, 0.2 ms, ground switching|8
+KL1212|2-channel digital input, 24 V DC, 3 ms, with diagnostics|8
+KL1232|2-channel digital input, 24 V DC, 0.2 ms, signal extension|5
+KL1302|2-channel digital input, 24 V DC, 3 ms, type 2|3
+KL1304|4-channel digital input, 24 V DC, 3 ms, type 2|3
+KL1312|2-channel digital input, 24 V DC, 0.2 ms, type 2|3
+KL1314|4-channel digital input, 24 V DC, 0.2 ms, type 2|3
+KL1352|2-channel digital input, NAMUR|70
+KL1362|2-channel digital input, break-in alarm, 24 V DC, 3 ms|35
+KL1382|2-channel digital input, thermistor, 24 V DC, 30 ms|60
+KL1402|2-channel digital input, 24 V DC, 3 ms, 2-wire connection|3
+KL1404|4-channel digital input, 24 V DC, 3 ms, 2-wire connection|3
+KL1408|8-channel digital input, 24 V DC, 3 ms, 1-wire connection|5
+KL1412|2-channel digital input, 24 V DC, 0.2 ms|3
+KL1414|4-channel digital input, 24 V DC, 0.2 ms, 2-wire connection|3
+KL1418|8-channel digital input, 24 V DC, 0.2 ms|5
+KL1434|4-channel digital input, 24 V DC, 0.2 ms, type 2, 2-wire connection|3
+KL1488|8-channel digital input, 24 V DC, 3 ms, ground switching|5
+KL1498|8-channel digital input, 24 V DC, 0.2 ms, ground switching|5
+KL1501|1-channel digital input, counter, 24 V DC, 100 kHz|50
+KL1512|2-channel digital input, counter, 24 V DC, 1 kHz|50
+KL1702|2-channel digital input, 120…230 V AC, 10 ms|3
+KL1704|4-channel digital input, 120…230 V AC, 10 ms|3
+KL1712|2-channel digital input, 120 V AC/DC, 10 ms|3
+KL1712-0060|2-channel digital input, 60 V DC, 10 ms|3
+KL1722|2-channel digital input, 120…230 V AC, 10 ms, without power contacts|3
+KL1804|4-channel digital input, 24 V DC, 3 ms|10
+KL1808|8-channel digital input, 24 V DC, 3 ms|15
+KL1809|16-channel digital input, 24 V DC, 3 ms|20
+KL1814|4-channel digital input, 24 V DC, 0.2 ms|10
+KL1819|16-channel digital input, 24 V DC, 0.2 ms|20
+KL1859|8-channel digital input + 8-channel digital output, 24 V DC, 3 ms, 0.5 A|25
+KL1862|16-channel digital input, 24 V DC, 3 ms, flat-ribbon cable|3
+KL1862-0010|16-channel digital input, 24 V DC, 3 ms, ground switching, flat-ribbon cable|3
+KL1872|16-channel digital input, 24 V DC, 0.2 ms, flat-ribbon cable|3
+KL1889|16-channel digital input, 24 V DC, 3 ms, ground switching|20
+KL1904|4-channel digital input, 24 V DC, TwinSAFE|48
+KL2012|2-channel digital output, 24 V DC, 0.5 A|5
+KL2022|2-channel digital output, 24 V DC, 2 A|5
+KL2032|2-channel digital output, 24 V DC, 0.5 A, reverse voltage protection|5
+KL2114|4-channel digital output, 24 V DC, 0.5 A|9
+KL2124|4-channel digital output, 5 V DC, 20 mA|14
+KL2134|4-channel digital output, 24 V DC, 0.5 A, reverse voltage protection|9
+KL2184|4-channel digital output, 24 V DC, 0.5 A, ground switching|9
+KL2212|2-channel digital output, 24 V DC, 0.5 A, with diagnostics|15
+KL2284|4-channel digital output, reverse switching, 24 V DC, 2 A|100
+KL2404|4-channel digital output, 24 V DC, 0.5 A, 2-wire connection|9
+KL2408|8-channel digital output, 24 V DC, 0.5 A, 1-wire connection|18
+KL2424|4-channel digital output, 24 V DC, 2 A|9
+KL2432|2-channel digital output, 24 V DC, 2 A|6
+KL2434|4-channel digital output, 24 V DC, 2 A|11
+KL2442|2-channel digital output, 24 V DC, 2 x 4 A/1 x 8 A|9
+KL2488|8-channel digital output, 24 V DC, 0.5 A, ground switching|18
+KL2502|2-channel PWM output, 24 V DC, 0.1 A|18
+KL2512|2-channel PWM output, 24 V DC, 1.5 A, ground switching|18
+KL2521|1-channel pulse train output, incr. enc. simulation, RS422, 50 mA|50
+KL2531|1-channel motion interface, stepper motor, 24 V DC, 1.5 A|60
+KL2532|2-channel motion interface, DC motor, 24 V DC, 1 A|50
+KL2535|2-channel PWM output, 24 V DC, 1 A, current-controlled|60
+KL2541|1-channel motion interface, stepper motor, 48 V DC, 5 A, with incremental encoder|100
+KL2545|2-channel PWM output, 8…50 V DC, 3.5 A, current-controlled|100
+KL2552|2-channel motion interface, DC motor, 48 V DC, 5 A|100
+KL2602|2-channel relay output, 230 V AC, 30 V DC, 5 A|80
+KL2602-0010|2-channel relay output, 230 V AC, 30 V DC, 5 A, contact-protecting switching|80
+KL2612|2-channel relay output, 125 V AC, 30 V DC, 0.5 A AC, 2 A DC|60
+KL2622|2-channel relay output, 230 V AC, 30 V DC, 5 A, without power contacts|85
+KL2622-0010|2-channel relay output, 230 V AC, 30 V DC, 5 A, contact-protecting switching, without power contacts|90
+KL2631|1-channel relay output, 400 V AC, 300 V DC, 2 A|80
+KL2634|4-channel relay output, 250 V AC, 30 V DC, 4 A|120
+KL2641|1-channel relay output, 230 V AC, 16 A, manual operation|5
+KL2652|2-channel relay output, 230 V AC, 300 V DC, 1 A|90
+KL2692|2-channel relay output, cycle monitoring, 30 V DC, 3 A|165
+KL2701|1-channel solid-state relay output, 0…230 V AC/DC, 3 A|65
+KL2702|2-channel solid-state relay output, 0…230 V AC/DC, 0.3 A|50
+KL2712|2-channel TRIAC output, 12…230 V AC, 0.5 A|10
+KL2722|2-channel TRIAC output, 12…230 V AC, 1 A|10
+KL2732|2-channel TRIAC output, 12…230 V AC, 1 A, without power contacts|10
+KL2751|1-channel universal dimmer, 230 V AC, 300 VA|95
+KL2761|1-channel universal dimmer, 230 V AC, 600 VA|95
+KL2784|4-channel solid-state relay output, 30 V AC, 48 V DC, 2 A|80
+KL2791|1-channel motion interface, AC motor, 230 V AC, 0.9 A|95
+KL2794|4-channel solid-state relay output, 30 V AC, 48 V DC, 2 A, potential-free|80
+KL2798|8-channel solid-state relay output, 30 V AC, 48 V DC, 2 A, potential-free|80
+KL2808|8-channel digital output, 24 V DC, 0.5 A|20
+KL2809|16-channel digital output, 24 V DC, 0.5 A|35
+KL2819|16-channel digital output, 24 V DC, 0.5 A, with diagnostics|80
+KL2828|8-channel digital output, 24 V DC, 2 A|18
+KL2872|16-channel digital output, 24 V DC, 0.5 A, flat-ribbon cable|5
+KL2872-0010|16-channel digital output, 24 V DC, 0.5 A, ground switching, flat-ribbon cable|5
+KL2889|16-channel digital output, 24 V DC, 0.5 A, ground switching|45
+KL2904|4-channel digital output, 24 V DC, 0.5 A, TwinSAFE|250
+KL3001|1-channel analog input, voltage, ±10 V, 12 bit, differential|65
+KL3002|2-channel analog input, voltage, ±10 V, 12 bit, differential|65
+KL3011|1-channel analog input, current, 0…20 mA, 12 bit, differential|60
+KL3012|2-channel analog input, current, 0…20 mA, 12 bit, differential|60
+KL3021|1-channel analog input, current, 4…20 mA, 12 bit, differential|60
+KL3022|2-channel analog input, current, 4…20 mA, 12 bit, differential|60
+KL3041|1-channel analog input, current, 0…20 mA, 12 bit, single-ended|65
+KL3042|2-channel analog input, current, 0…20 mA, 12 bit, single-ended|65
+KL3044|4-channel analog input, current, 0…20 mA, 12 bit, single-ended|65
+KL3051|1-channel analog input, current, 4…20 mA, 12 bit, single-ended|65
+KL3052|2-channel analog input, current, 4…20 mA, 12 bit, single-ended|65
+KL3054|4-channel analog input, current, 4…20 mA, 12 bit, single-ended|75
+KL3061|1-channel analog input, voltage, 0…10 V, 12 bit, single-ended|60
+KL3062|2-channel analog input, voltage, 0…10 V, 12 bit, single-ended|60
+KL3064|4-channel analog input, voltage, 0…10 V, 12 bit, single-ended, with shield connector|85
+KL3102|2-channel analog input, voltage, ±10 V, 16 bit, differential|65
+KL3112|2-channel analog input, current, 0…20 mA, 16 bit, differential|60
+KL3122|2-channel analog input, current, 4…20 mA, 16 bit, differential|60
+KL3132|2-channel analog input, voltage, ±10 V, 16 bit, differential, high-precision|85
+KL3142|2-channel analog input, current, 0…20 mA, 16 bit, differential, high-precision|85
+KL3152|2-channel analog input, current, 4…20 mA, 16 bit, differential, high-precision|85
+KL3162|2-channel analog input, voltage, 0…10 V, 16 bit, differential, high-precision|85
+KL3172|2-channel analog input, voltage, 0…2 V, 16 bit, differential, high-precision|85
+KL3182|2-channel analog input, voltage, ±2 V, 16 bit, differential, high-precision|85
+KL3201|1-channel analog input, temperature, RTD (Pt100), 16 bit|60
+KL3202|2-channel analog input, temperature, RTD (Pt100), 16 bit|60
+KL3204|4-channel analog input, temperature, RTD (Pt100), 16 bit|60
+KL3204-0030|4-channel analog input, temperature, NTC (10 kΩ), 16 bit|60
+KL3208-0010|8-channel analog input, temperature, RTD (Pt1000, NTC), 16 bit|85
+KL3214|4-channel analog input, temperature, RTD (Pt100), 16 bit, 3-wire connection|120
+KL3222|2-channel analog input, temperature, RTD (Pt100), 16 bit, high-precision|60
+KL3228|8-channel analog input, temperature, RTD (Pt1000, Ni1000), 16 bit|85
+KL3311|1-channel analog input, temperature, thermocouple, 16 bit|65
+KL3312|2-channel analog input, temperature, thermocouple, 16 bit|65
+KL3314|4-channel analog input, temperature, thermocouple, 16 bit|75
+KL3351|1-channel analog input, measuring bridge, full bridge, 16 bit|65
+KL3356|1-channel analog input, measuring bridge, full bridge, 16 bit, high-precision|85
+KL3361|1-channel analog input, voltage, ±20 mV, 15 bit, oscilloscope function|120
+KL3362|2-channel analog input, voltage, ±10 V, 15 bit, oscilloscope function|120
+KL3403|3-channel analog input, power measurement, 500 V AC, 1 A, 16 bit|115
+KL3404|4-channel analog input, voltage, ±10 V, 12 bit, single-ended|100
+KL3408|8-channel analog input, voltage, ±10 V, 12 bit, single-ended|140
+KL3444|4-channel analog input, current, 0…20 mA, 12 bit, single-ended|85
+KL3448|8-channel analog input, current, 0…20 mA, 12 bit, single-ended|105
+KL3453|3-channel analog input, power measurement, 690 V AC, 0.1/1/5 A, 24 bit, electrically isolated|200
+KL3454|4-channel analog input, current, 4…20 mA, 12 bit, single-ended|85
+KL3458|8-channel analog input, current, 4…20 mA, 12 bit, single-ended|105
+KL3464|4-channel analog input, voltage, 0…10 V, 12 bit, single-ended|100
+KL3468|8-channel analog input, voltage, 0…10 V, 12 bit, single-ended|140
+KL3681|1-channel analog input, multimeter, 300 V AC/DC, 10 A, 19 bit|100
+KL4001|1-channel analog output, voltage, 0…10 V, 12 bit|75
+KL4002|2-channel analog output, voltage, 0…10 V, 12 bit|75
+KL4004|4-channel analog output, voltage, 0…10 V, 12 bit|85
+KL4011|1-channel analog output, current, 0…20 mA, 12 bit|60
+KL4012|2-channel analog output, current, 0…20 mA, 12 bit|60
+KL4021|1-channel analog output, current, 4…20 mA, 12 bit|60
+KL4022|2-channel analog output, current, 4…20 mA, 12 bit|60
+KL4031|1-channel analog output, voltage, ±10 V, 12 bit|75
+KL4032|2-channel analog output, voltage, ±10 V, 12 bit|75
+KL4034|4-channel analog output, voltage, ±10 V, 12 bit|85
+KL4112|2-channel analog output, current, 0…20 mA, 16 bit|60
+KL4132|2-channel analog output, voltage, ±10 V, 16 bit|75
+KL4404|4-channel analog output, voltage, 0…10 V, 12 bit, conversion time typ. 4 ms|20
+KL4408|8-channel analog output, voltage, 0…10 V, 12 bit|20
+KL4414|4-channel analog output, current, 0…20 mA, 12 bit|20
+KL4418|8-channel analog output, current, 0…20 mA, 12 bit|20
+KL4424|4-channel analog output, current, 4…20 mA, 12 bit|20
+KL4428|8-channel analog output, current, 4…20 mA, 12 bit|20
+KL4434|4-channel analog output, voltage, ±10 V, 12 bit, conversion time typ. 4 ms|20
+KL4438|8-channel analog output, voltage, ±10 V, 12 bit|20
+KL4494|2-channel analog input + 2-channel analog output, voltage, ±10 V, 12 bit|70
+KL5001|1-channel encoder interface, SSI|25
+KL5051|1-channel encoder interface, SSI, bidirectional|75
+KL5101|1-channel encoder interface, incremental, 5 V DC (DIFF RS422, TTL), 1 MHz|60
+KL5111|1-channel encoder interface, incremental, 24 V DC HTL, 250 kHz|40
+KL5121|1-channel encoder interface, incremental, 24 V DC HTL, 250 kHz, with 4 x digital output 24 V DC, linear path control|60
+KL5151|1-channel encoder interface, incremental, 24 V DC HTL, 100 kHz|40
+KL5152|2-channel encoder interface, incremental, 24 V DC HTL, 100 kHz|40
+KL6001|1-channel communication interface, serial, RS232|55
+KL6011|1-channel communication interface, serial, TTY, 20 mA|55
+KL6021|1-channel communication interface, serial, RS422/RS485|65
+KL6031|1-channel communication interface, serial, RS232|55
+KL6041|1-channel communication interface, serial, RS422/RS485|65
+KL6051|1-channel communication interface, serial, 62.5 kbaud|65
+KL6201|1-channel communication interface, ASi, master, without power contacts|55
+KL6211|1-channel communication interface, ASi, master|55
+KL6224|4-channel communication interface, IO-Link, master|85
+KL6301|1-channel communication interface, KNX/EIB|55
+KL6581|1-channel communication interface, EnOcean®, master|60
+KL6583|EnOcean®, radio transceiver, for KL6581|55|~
+KL6771|1-channel communication interface, MP-Bus, master|55
+KL6781|1-channel communication interface, M-Bus, master|65
+KL6811|1-channel communication interface, DALI/DSI, master/power supply|55
+KL6821|1-channel communication interface, DALI/DALI-2, master/power supply|55
+KL6831|1-channel communication interface, SMI, master, LoVo|55
+KL6841|1-channel communication interface, SMI, master, 230 V AC|55
+KL6904|Communication interface + 4-port digital output, 24 V DC, 0.5 A, TwinSAFE Logic|250
+KL9010|End terminal|0
+KL9020|Terminal bus extension, end terminal|70
+KL9050|Terminal bus extension, coupler terminal|10|~
+KL9070|Shield terminal|0
+KL9080|Separation terminal|0
+KL9100|Potential supply terminal, 24 V DC|0
+KL9110|Potential supply terminal, 24 V DC, with diagnostics|10
+KL9150|Potential supply terminal, 120…230 V AC|0
+KL9160|Potential supply terminal, 120…230 V AC, with diagnostics|10
+KL9180|Potential distribution terminal, 2 x 24 V DC, 2 x 0 V DC, 2 x PE|0
+KL9181|Potential distribution terminal, 8 x 2 potentials|0
+KL9182|Potential distribution terminal, 2 x 8 potentials|0
+KL9183|Potential distribution terminal, 16 x 1 potential|0
+KL9184|Potential distribution terminal, 8 x 24 V DC, 8 x 0 V DC|0
+KL9185|Potential distribution terminal, 4 x 24 V DC, 4 x 0 V DC|0
+KL9186|Potential distribution terminal, 8 x 24 V DC|0
+KL9187|Potential distribution terminal, 8 x 0 V DC|0
+KL9188|Potential distribution terminal, 16 x 24 V DC|0
+KL9189|Potential distribution terminal, 16 x 0 V DC|0
+KL9190|Potential supply terminal, any voltage up to 230 V AC|0
+KL9195|Shield terminal|0
+KL9200|Potential supply terminal, 24 V DC, with fuse|0
+KL9210|Potential supply terminal, 24 V DC, with diagnostics and fuse|10
+KL9250|Potential supply terminal, 120…230 V AC, with fuse|0
+KL9260|Potential supply terminal, 120…230 V AC, with diagnostics and fuse|10
+KL9290|Potential supply terminal, any voltage up to 230 V AC, with fuse|0
+KL9300|Diode array terminal|10|~
+KL9301|Diode array terminal|10|~
+KL9302|Diode array terminal|10|~
+KL9309|Adapter terminal for manual operating modules|10|~
+KL9380|Mains filter terminal for dimmers|10|~
+KL9400|Power supply unit terminal for the K-bus|0
+KL9505|Power supply terminal 5 V DC|10|~
+KL9508|Power supply terminal 8 V DC|10|~
+KL9510|Power supply terminal 10 V DC|10|~
+KL9512|Power supply terminal 12 V DC|10|~
+KL9515|Power supply terminal 15 V DC|10|~
+KL9520|AS-Interface potential feed terminal with filter|0
+KL9528|AS-Interface power supply terminal 24 V DC/30 V DC, 1.25 A|10
+KL9540|System terminal, surge filter field supply|0
+KL9540-0010|System terminal, surge filter field supply for analog terminals|0
+KL9550|System terminal, surge filter system and field supply|0
+KL9560|Power supply unit terminal 24 V DC/24 V DC, 0.1 A|10|~
+KM1002|Bus Terminal module, 16-channel digital input, 24 V DC, 3 ms|3
+KM1004|Bus Terminal module, 32-channel digital input, 24 V DC, 3 ms|3
+KM1008|Bus Terminal module, 64-channel digital input, 24 V DC, 3 ms|3
+KM1012|Bus Terminal module, 16-channel digital input, 24 V DC, 0.2 ms|3
+KM1014|Bus Terminal module, 32-channel digital input, 24 V DC, 0.2 ms|3
+KM1018|Bus Terminal module, 64-channel digital input, 24 V DC, 0.2 ms|3
+KM1644|Bus Terminal module, 4-channel digital input, 24 V DC, manual operation|20
+KM2002|Bus Terminal module, 16-channel digital output, 24 V DC, 0.5 A|5
+KM2004|Bus Terminal module, 32-channel digital output, 24 V DC, 0.5 A|5
+KM2008|Bus Terminal module, 64-channel digital output, 24 V DC, 0.5 A|5
+KM2042|Bus Terminal module, 16-channel digital output, 24 V DC, 0.5 A, D-sub|5
+KM2604|Bus Terminal module, 4-channel relay output, 230 V AC, 16 A|15
+KM2614|Bus Terminal module, 4-channel relay output, 230 V AC, 16 A, manual/automatic operation|15
+KM2642|Bus Terminal module, 2-channel digital output, 230 V AC, 6 A, manual/automatic operation|130
+KM2652|Bus Terminal module, 2-channel digital output, 230 V AC, 6 A, manual/automatic operation|130
+KM3701|Bus Terminal module, 1-channel analog input, differential pressure, ±100 hPa (±100 mbar)|15
+KM3702|Bus Terminal module, 2-channel analog input, relative pressure, 0…7500 hPa (0…+7.5 bar)|15
+KM3712|Bus Terminal module, 2-channel analog input, relative pressure, ±1000 hPa (-1…+1 bar)|15
+KM4602|Bus Terminal module, 2-channel analog output, voltage, 0…10 V, 12 bit, single-ended, manual/autom. operation|175
 `;
 // code|description|supply mA|bus|~
 const RAW_COUPLERS = `
-EK1100|EtherCAT coupler|2000|E
-EK1101|EtherCAT coupler with ID switch|2000|E
-EK1101-0080|EtherCAT coupler, ID switch, Fast Hot Connect|2000|E|~
-EK1501|EtherCAT coupler with ID switch, multimode fiber|2000|E|~
-EK1501-0010|EtherCAT coupler with ID switch, single-mode fiber|2000|E|~
-EK1814|EtherCAT coupler with 4 DI / 4 DO|1000|E|~
-EK1818|EtherCAT coupler with 8 DI / 4 DO|1000|E|~
-EK1828|EtherCAT coupler with 4 DI / 8 DO|1000|E|~
-EK1828-0010|EtherCAT coupler with 8 DO|1000|E|~
-EK3100|PROFIBUS bus coupler for EtherCAT terminals|2000|E|~
-EK9000|Modbus TCP / ADS bus coupler for EtherCAT terminals|2000|E|~
-EK9160|IoT bus coupler for EtherCAT terminals|2000|E|~
-EK9300|PROFINET RT bus coupler for EtherCAT terminals|2000|E|~
-EK9500|EtherNet/IP bus coupler for EtherCAT terminals|2000|E|~
+BK1120|Bus Coupler, EtherCAT, Economy plus|1750|K
+BK1150|Bus Coupler, EtherCAT, Compact|1750|K
+BK2000|Bus Coupler, Lightbus|1750|K
+BK2020|Bus Coupler, Lightbus, Economy plus|1750|K
+BK3100|Bus Coupler, PROFIBUS|1750|K
+BK3120|Bus Coupler, PROFIBUS, Economy plus|1750|K
+BK3150|Bus Coupler, PROFIBUS, Compact|1750|K
+BK3520|Bus Coupler, PROFIBUS, fiber optic, multi-mode, Economy plus|1750|K
+BK4000|Bus Coupler, INTERBUS|1750|K
+BK4020|Bus Coupler, INTERBUS, Economy plus|1750|K
+BK5120|Bus Coupler, CANopen, Economy plus|1750|K
+BK5150|Bus Coupler, CANopen, Compact|1750|K
+BK5151|Bus Coupler, CANopen, D-sub, Compact|1750|K
+BK5160|CANopen K-bus Bus Coupler|1750|K
+BK5200|Bus Coupler, DeviceNet®|1750|K
+BK5220|Bus Coupler, DeviceNet®, Economy plus|1750|K
+BK5250|Bus Coupler, DeviceNet®, Compact|1750|K
+BK7150|Bus Coupler, CC-Link, Compact|1000|K
+BK7350|Bus Coupler, Modbus, Compact|1750|K
+BK7500|Bus Coupler, Sercos II|1750|K
+BK7520|Bus Coupler, Sercos II, Economy plus|1750|K
+BK8000|Bus Coupler, RS485|1750|K
+BK8100|Bus Coupler, RS232|1750|K
+BK9000|Bus Coupler, Ethernet TCP/IP|1750|K
+BK9050|Bus Coupler, Ethernet TCP/IP, Compact|1750|K
+BK9053|Bus Coupler, PROFINET RT, Compact|1750|K
+BK9055|Bus Coupler, EtherNet/IP™, Compact|1750|K
+BK9100|Bus Coupler, Ethernet TCP/IP|1750|K
+BK9103|Bus Coupler, PROFINET RT|1750|K
+BK9105|Bus Coupler, EtherNet/IP™|1750|K
+EK1000|EtherCAT TSN Coupler|2000|E
+EK1100|EtherCAT Coupler|2000|E
+EK1100-0008|EtherCAT Coupler with M8 connection|2000|E
+EK1101|EtherCAT Coupler with ID switch|2000|E
+EK1101-0008|EtherCAT Coupler with ID switch and M8 connection|2000|E
+EK1101-0010|EtherCAT Coupler with ID switch, Extended Distance|2000|E
+EK1101-0080|EtherCAT Coupler with ID switch, Fast Hot Connect|2000|E
+EK1300|EtherCAT P coupler|2000|E
+EK1501|EtherCAT Coupler with ID switch, multi-mode fiber optic|2000|E
+EK1501-0010|EtherCAT Coupler with ID switch, single-mode fiber optic|2000|E
+EK1501-0100|EtherCAT Coupler, media converter (multi-mode fiber optic, RJ45 OUT) with ID switch|2000|E
+EK1541|EtherCAT Coupler with ID switch, plastic optical fiber|2000|E
+EK1814|EtherCAT Coupler with integrated digital inputs/outputs|1000|E
+EK1818|EtherCAT Coupler with integrated digital inputs/outputs|1000|E
+EK1828|EtherCAT Coupler with integrated digital inputs/outputs|1000|E
+EK1828-0010|EtherCAT Coupler with integrated digital outputs|1000|E
+EK9160|Bus Coupler, IoT|2000|E
+EKM1101|EtherCAT Coupler with ID switch and diagnostics|2000|E
+EK3100|Bus Coupler, PROFIBUS|2000|E|~
+EK9000|Bus Coupler, Modbus TCP/UDP|2000|E|~
+EK9300|Bus Coupler, PROFINET RT|2000|E|~
+EK9500|Bus Coupler, EtherNet/IP™|2000|E|~
 CX-EBUS|CX embedded PC, E-bus power supply|2000|E|~
-BK1120|EtherCAT coupler for Bus Terminals (K-bus)|1750|K|~
-BK1150|EtherCAT compact coupler for Bus Terminals (K-bus)|1000|K|~
-BK3120|PROFIBUS DP coupler for Bus Terminals (K-bus)|1750|K|~
-BK5120|CANopen coupler for Bus Terminals (K-bus)|1750|K|~
-BK9000|Ethernet TCP/IP coupler for Bus Terminals (K-bus)|1750|K|~
-BK9050|Ethernet compact coupler for Bus Terminals (K-bus)|1000|K|~
 CUSTOM|Other coupler, custom supply|2000|E
 `;
-const REFRESH = { EL9410: 'E', KL9400: 'K' };
+const REFRESH = { EL9410: 'E', ELM9410: 'E', ELX9410: 'E', KL9400: 'K' };
 const REFRESH_MA = 2000;
-const K_START = { BK1250: 1000 }; // K-bus supply a BK1250 gives (estimate)
+const K_START = { BK1250: 500 }; // K-bus supply a BK1250 gives (Beckhoff: 500 mA)
 const FUNC_NAME = { 1: 'Digital input', 2: 'Digital output', 3: 'Analog input', 4: 'Analog output', 5: 'Position', 6: 'Communication', 7: 'Motion', 9: 'System & power' };
 
 function busOf(code) {
@@ -947,7 +1632,7 @@ function analyze(seg, reservePct) {
     }
     row.left = B.left; row.src = B.src;
     if (K_START[it.code] && it.bus === 'E') { K = mk(K_START[it.code]); row.note = `Starts K-bus, ${K_START[it.code]} mA`; }
-    if (it.code === 'EK1110') seenExt = true;
+    if (it.code.startsWith('EK1110')) seenExt = true;
     rows.push(row);
   });
   // Suggested refresh terminals (EL9410 on E-bus, KL9400 on K-bus)
@@ -1176,7 +1861,8 @@ function lastOpenSlot(seg, code) {
   if (bus === 'box') return seg.items.length;
   // On-rail devices go after the last rail device, ahead of an EK1110 and any EP boxes.
   let i = seg.items.length;
-  while (i > 0 && (seg.items[i - 1].bus === 'box' || (seg.items[i - 1].code === 'EK1110' && code !== 'EK1110'))) i--;
+  const isExt = c => c.startsWith('EK1110');
+  while (i > 0 && (seg.items[i - 1].bus === 'box' || (isExt(seg.items[i - 1].code) && !isExt(code)))) i--;
   return i;
 }
 function moveTo(seg, from, to) {
