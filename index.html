@@ -154,7 +154,8 @@ input[type=number] { font-family: var(--font-mono); }
 .slice.coupler .body { background: var(--surface-2); }
 .slice.coupler .code { font-size: 17px; }
 .slice.feed .body { outline: 2px solid var(--accent); outline-offset: -2px; }
-.slice.ghost { cursor: default; }
+.slice.ghost { cursor: copy; }
+.slice.ghost:hover .body { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .slice.ghost .body { background: transparent; border: 2px dashed var(--accent); }
 .slice.ghost .code, .slice.ghost .ma { color: var(--accent); }
 .slice.sel .body { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ink); }
@@ -1008,7 +1009,7 @@ function renderRail(seg, a, idx) {
   if (lastRail === -1) { html += endcap(); endDrawn = true; }
   a.rows.forEach(row => {
     if (suggAt.has(row.i)) {
-      html += `<div class="slice ghost" title="Suggested ${suggAt.get(row.i)}"><div class="body"><div class="stripe" style="--fam:transparent"></div><div class="code">${suggAt.get(row.i)}</div></div><div class="ma">+2k</div><div class="meter"><i style="height:0"></i></div></div>`;
+      html += `<div class="slice ghost" role="button" tabindex="0" data-ghost-seg="${idx}" data-before="${row.i}" data-code="${suggAt.get(row.i)}" title="Suggested ${suggAt.get(row.i)}. Double-click to insert it." aria-label="Suggested ${suggAt.get(row.i)} before position ${row.i + 1}. Press Enter to insert it."><div class="body"><div class="stripe" style="--fam:transparent"></div><div class="code">${suggAt.get(row.i)}</div></div><div class="ma">+2k</div><div class="meter"><i style="height:0"></i></div></div>`;
     }
     const isBox = row.it.bus === 'box';
     if (isBox && !prevBox) html += `<div class="cable" aria-hidden="true"></div>`;
@@ -1132,7 +1133,7 @@ function renderSegment(seg, idx) {
     </div>
     ${renderReadout(a, seg)}
     <div class="fieldbus">
-      <div class="fb-head"><span class="label">Fieldbus</span><span class="hint">${hasCpl ? 'Click a device to select it. Drag it to change the order. Shift + arrow keys also move it.' : ''}</span></div>
+      <div class="fb-head"><span class="label">Fieldbus</span><span class="hint">${hasCpl ? 'Click a device to select it. Drag it to change the order. Shift + arrow keys also move it. Double-click a dashed slot to fill it.' : ''}</span></div>
       ${renderRail(seg, a, idx)}
     </div>
     ${hasCpl ? `<div class="rail-legend">
@@ -1297,6 +1298,20 @@ function endDrag(e, cancelled) {
   }
   render();
 }
+function fillGhost(g) {
+  const seg = segAt(g.dataset.ghostSeg), at = +g.dataset.before, code = g.dataset.code;
+  if (!seg || !code) return;
+  const it = makeItem(code);
+  seg.items.splice(at, 0, it);
+  selected = it.uid;
+  toast(`Inserted ${code} at position ${at + 1}`);
+  render();
+}
+document.addEventListener('dblclick', e => { const g = e.target.closest('.slice.ghost[data-code]'); if (g) fillGhost(g); });
+document.addEventListener('keydown', e => {
+  const g = e.target.closest && e.target.closest('.slice.ghost[data-code]');
+  if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); fillGhost(g); }
+});
 document.addEventListener('pointerup', e => endDrag(e, false));
 document.addEventListener('pointercancel', e => endDrag(e, true));
 document.addEventListener('keydown', e => {
