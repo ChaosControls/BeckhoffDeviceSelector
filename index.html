@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>E-Bus Segment Planner</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column of coupler segments; each shows a DIN-rail strip, a budget readout, then the editable terminal list. */
+:root {
+  --bg: #e9ecef;
+  --surface: #f8f9fa;
+  --surface-2: #dfe3e7;
+  --ink: #161c22;
+  --muted: #5a6470;
+  --line: #c6ccd3;
+  --accent: #0a6c96;
+  --accent-ink: #ffffff;
+  --housing: #d5d9dd;
+  --ok: #1d7a4c;
+  --ok-bg: #d8efe2;
+  --low: #9a6200;
+  --low-bg: #fbecc9;
+  --over: #b3261e;
+  --over-bg: #f8d9d6;
+  --fam-1: #d9a400; --fam-2: #d8541d; --fam-3: #2f7fc1; --fam-4: #7a4fbf;
+  --fam-5: #1c9a8a; --fam-6: #5d6b78; --fam-7: #b23a74; --fam-9: #3c4650;
+  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12171c; --surface: #1a2027; --surface-2: #232a32; --ink: #e6eaee; --muted: #97a2ad;
+    --line: #333c46; --accent: #4fb3e0; --accent-ink: #08202c; --housing: #2c343d;
+    --ok: #5fd197; --ok-bg: #173628; --low: #f1bd4f; --low-bg: #3a2d10; --over: #ff8a80; --over-bg: #43201d;
+    --fam-9: #8a96a2; --fam-6: #8794a1;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12171c; --surface: #1a2027; --surface-2: #232a32; --ink: #e6eaee; --muted: #97a2ad;
+  --line: #333c46; --accent: #4fb3e0; --accent-ink: #08202c; --housing: #2c343d;
+  --ok: #5fd197; --ok-bg: #173628; --low: #f1bd4f; --low-bg: #3a2d10; --over: #ff8a80; --over-bg: #43201d;
+  --fam-9: #8a96a2; --fam-6: #8794a1;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 22px; }
+h1, h2 { font-family: var(--font-display); text-wrap: balance; margin: 0; letter-spacing: .01em; }
+h1 { font-size: clamp(30px, 5vw, 42px); font-weight: 700; line-height: 1.05; }
+h2 { font-size: 24px; font-weight: 600; }
+.lede { color: var(--muted); max-width: 66ch; margin: 6px 0 0; }
+.mono, .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 7px 12px; font-weight: 500;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.08); }
+.icon-btn { border: 1px solid transparent; background: none; border-radius: 4px; width: 28px; height: 28px; color: var(--muted); }
+.icon-btn:hover { border-color: var(--line); color: var(--ink); }
+.icon-btn:disabled { opacity: .3; cursor: default; border-color: transparent; }
+input[type=text], input[type=number], select {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; min-width: 0;
+}
+input[type=number] { font-family: var(--font-mono); }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: end; justify-content: space-between; }
+.toolbar .field { display: grid; gap: 4px; }
+.toolbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.segment { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.seg-head { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: end; justify-content: space-between; padding: 16px 18px 14px; }
+.seg-title { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.seg-name { font-family: var(--font-display); font-size: 24px; font-weight: 600; border: 1px solid transparent; background: none; padding: 0 4px; width: 9.5em; }
+.seg-name:hover, .seg-name:focus { border-color: var(--line); background: var(--surface); }
+.seg-config { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+.seg-config .field { display: grid; gap: 3px; }
+.seg-config input[type=number] { width: 96px; }
+
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.st-ok { color: var(--ok); background: var(--ok-bg); }
+.st-low { color: var(--low); background: var(--low-bg); }
+.st-over { color: var(--over); background: var(--over-bg); }
+
+.readout { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--surface-2); }
+.readout > div { padding: 10px 18px; display: grid; gap: 1px; }
+.readout > div + div { border-left: 1px solid var(--line); }
+.readout .num { font-size: 20px; font-weight: 500; }
+.readout .num small { font-size: 12px; color: var(--muted); margin-left: 3px; }
+@media (max-width: 640px) {
+  .readout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .readout > div:nth-child(3) { border-left: 0; }
+  .readout > div:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+
+/* DIN rail strip */
+.rail-wrap { overflow-x: auto; padding: 18px 18px 10px; }
+.rail { position: relative; display: flex; align-items: flex-start; gap: 2px; width: max-content; padding-bottom: 6px; }
+.rail::before { content: ""; position: absolute; left: -6px; right: -6px; top: 52px; height: 22px; background: repeating-linear-gradient(90deg, var(--line) 0 10px, transparent 10px 25px), var(--surface-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); z-index: 0; }
+.slice { position: relative; z-index: 1; width: 30px; display: grid; gap: 6px; justify-items: center; cursor: pointer; background: none; border: 0; padding: 0; }
+.slice .body { width: 100%; height: 126px; background: var(--housing); border: 1px solid var(--line); border-radius: 3px 3px 2px 2px; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
+.slice .stripe { width: 100%; height: 8px; background: var(--fam, var(--fam-9)); flex: none; }
+.slice .code { writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--font-display); font-weight: 600; font-size: 14px; letter-spacing: .04em; margin-top: 8px; white-space: nowrap; }
+.slice .ma { font-family: var(--font-mono); font-size: 10px; color: var(--muted); height: 14px; }
+.slice .meter { width: 8px; height: 46px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 2px; position: relative; overflow: hidden; }
+.slice .meter i { position: absolute; left: 0; right: 0; bottom: 0; background: var(--ok); }
+.slice.low .meter i { background: var(--low); }
+.slice.over .meter i { background: var(--over); height: 100% !important; opacity: .85; }
+.slice.over .body { border-color: var(--over); box-shadow: inset 0 0 0 1px var(--over); }
+.slice.coupler { width: 58px; }
+.slice.coupler .body { background: var(--surface-2); }
+.slice.coupler .code { font-size: 17px; }
+.slice.feed .body { outline: 2px solid var(--accent); outline-offset: -2px; }
+.slice.ghost .body { background: transparent; border: 2px dashed var(--accent); }
+.slice.ghost .code { color: var(--accent); }
+.slice.ghost .ma { color: var(--accent); }
+.slice.sel .body { box-shadow: 0 0 0 2px var(--ink); }
+.slice.endcap { width: 14px; cursor: default; }
+.slice.endcap .body { background: var(--surface-2); }
+.rail-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 0 18px 12px; font-size: 12px; color: var(--muted); }
+.rail-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.rail-legend b { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+/* advice */
+.advice { margin: 0 18px 14px; padding: 12px 14px; border-radius: 8px; display: grid; gap: 8px; }
+.advice.st-over { background: var(--over-bg); color: var(--ink); }
+.advice.st-low { background: var(--low-bg); color: var(--ink); }
+.advice.st-ok { background: var(--ok-bg); color: var(--ink); }
+.advice p { margin: 0; }
+.advice ul { margin: 0; padding-left: 20px; display: grid; gap: 2px; }
+.advice .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+
+/* table */
+.table-wrap { overflow-x: auto; border-top: 1px solid var(--line); }
+table { width: 100%; border-collapse: collapse; min-width: 640px; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; background: var(--surface); }
+td.num, th.num { text-align: right; }
+tbody tr:hover { background: var(--surface-2); }
+tr.sel { background: var(--surface-2); }
+tr.ghost-row td { color: var(--accent); border-bottom-style: dashed; font-size: 13px; background: transparent; }
+tr.feed-row td { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.pos { color: var(--muted); width: 36px; }
+.term-code { font-family: var(--font-display); font-weight: 600; font-size: 17px; letter-spacing: .03em; display: inline-flex; align-items: center; gap: 8px; }
+.term-code b { width: 4px; height: 16px; border-radius: 1px; background: var(--fam, var(--fam-9)); }
+.desc { color: var(--muted); font-size: 13px; }
+.verify { font-size: 11px; color: var(--low); border: 1px solid currentColor; border-radius: 4px; padding: 0 4px; margin-left: 6px; font-family: var(--font-body); font-weight: 600; letter-spacing: 0; }
+td input[type=number] { width: 84px; text-align: right; }
+.left-cell { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.left-cell.low { color: var(--low); font-weight: 500; }
+.left-cell.over { color: var(--over); font-weight: 600; }
+.actions { white-space: nowrap; text-align: right; width: 104px; }
+.empty td { color: var(--muted); padding: 18px 10px; text-align: center; }
+
+.add-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; padding: 14px 18px 16px; background: var(--surface-2); }
+.add-row .field { display: grid; gap: 3px; }
+.add-row input[list] { width: 230px; }
+.add-row input.ma-in { width: 90px; }
+.add-row input.qty-in { width: 64px; }
+.add-row .hint { font-size: 12px; color: var(--muted); flex-basis: 100%; min-height: 18px; }
+.seg-foot { display: flex; justify-content: space-between; padding: 10px 18px; gap: 8px; flex-wrap: wrap; }
+
+.notes { color: var(--muted); font-size: 13px; max-width: 80ch; display: grid; gap: 6px; }
+.notes p { margin: 0; }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 6px; font-size: 14px; }
+@media (max-width: 520px) {
+  .add-row input[list] { width: 100%; }
+  .add-row .field:first-child { flex-basis: 100%; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .slice .meter i { transition: height .25s ease; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>E-Bus Segment Planner</h1>
+    <p class="lede">List the EL terminals behind each EK coupler in rail order. The planner adds up E-bus current, flags any segment that runs past its supply, and marks where an EL9410 should go to refresh it.</p>
+  </header>
+
+  <div class="toolbar">
+    <div class="field">
+      <label class="label" for="reserve">Keep in reserve</label>
+      <select id="reserve">
+        <option value="0">0 % (use full supply)</option>
+        <option value="5">5 % of each supply</option>
+        <option value="10">10 % of each supply</option>
+        <option value="15">15 % of each supply</option>
+        <option value="20">20 % of each supply</option>
+      </select>
+    </div>
+    <div class="toolbar-actions">
+      <button class="btn" id="copy-bom" type="button">Copy parts list</button>
+      <button class="btn" id="load-example" type="button">Load example</button>
+      <button class="btn primary" id="add-seg" type="button">Add segment</button>
+    </div>
+  </div>
+
+  <div id="segments" class="wrap"></div>
+
+  <datalist id="catalog"></datalist>
+
+  <section class="notes">
+    <p><strong>How the budget is counted.</strong> Each coupler (or CX controller) feeds the E-bus terminals to its right. An EL9410 counts as a fresh 2,000 mA for the terminals after it, and the coupler's leftover current is not carried past it. That is the conservative reading. "Reserve" holds back a share of each supply so the segment isn't planned right up to the limit.</p>
+    <p><strong>Current values.</strong> The catalog uses typical E-bus draws from Beckhoff datasheets. Values marked <span class="verify">verify</span> are less certain. Edit any draw in the table, and compare against the E-Bus column in TwinCAT after scanning the real hardware.</p>
+  </section>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+// ---------- catalog ----------
+// [code, description, typical E-bus mA, verify?]
+const CATALOG = [
+  ['EL1002', '2-ch digital input 24 V DC', 90],
+  ['EL1004', '4-ch digital input 24 V DC', 90],
+  ['EL1008', '8-ch digital input 24 V DC', 90],
+  ['EL1018', '8-ch digital input 24 V DC, 10 µs', 90],
+  ['EL1088', '8-ch digital input 24 V DC, ground switching', 90],
+  ['EL1809', '16-ch digital input 24 V DC', 100],
+  ['EL1819', '16-ch digital input 24 V DC, 10 µs', 100],
+  ['EL2002', '2-ch digital output 24 V DC, 0.5 A', 100],
+  ['EL2004', '4-ch digital output 24 V DC, 0.5 A', 100],
+  ['EL2008', '8-ch digital output 24 V DC, 0.5 A', 110],
+  ['EL2088', '8-ch digital output 24 V DC, ground switching', 110],
+  ['EL2809', '16-ch digital output 24 V DC, 0.5 A', 140],
+  ['EL3002', '2-ch analog input ±10 V, 12 bit', 130],
+  ['EL3004', '4-ch analog input ±10 V, 12 bit', 130],
+  ['EL3008', '8-ch analog input ±10 V, 12 bit', 130],
+  ['EL3052', '2-ch analog input 4…20 mA, 12 bit', 130],
+  ['EL3054', '4-ch analog input 4…20 mA, 12 bit', 130],
+  ['EL3062', '2-ch analog input 0…10 V, 12 bit', 130],
+  ['EL3064', '4-ch analog input 0…10 V, 12 bit', 130],
+  ['EL3102', '2-ch analog input ±10 V, differential, 16 bit', 130],
+  ['EL3104', '4-ch analog input ±10 V, differential, 16 bit', 130],
+  ['EL3202', '2-ch RTD input, PT100', 190],
+  ['EL3204', '4-ch RTD input, PT100', 190],
+  ['EL3312', '2-ch thermocouple input', 200],
+  ['EL4002', '2-ch analog output 0…10 V, 12 bit', 175, true],
+  ['EL4004', '4-ch analog output 0…10 V, 12 bit', 210, true],
+  ['EL4012', '2-ch analog output 0…20 mA, 12 bit', 175, true],
+  ['EL5101', 'Incremental encoder interface, RS422', 130],
+  ['EL5151', 'Incremental encoder interface, 24 V', 130, true],
+  ['EL6001', 'Serial interface RS232', 160, true],
+  ['EL6751', 'CANopen master/slave', 350],
+  ['EL6900', 'TwinSAFE logic', 188, true],
+  ['EL7031', 'Stepper motor terminal, 1.5 A', 120, true],
+  ['EL7041', 'Stepper motor terminal, 5 A', 140, true],
+  ['EL7211', 'Servo motor terminal, 4.5 A', 120, true],
+  ['EK1122', 'EtherCAT junction, 2-port', 220],
+  ['EL9100', 'Potential feed terminal 24 V DC', 0],
+  ['EL9410', 'E-bus power supply terminal, refreshes 2,000 mA', 0],
+];
+const CAT = Object.fromEntries(CATALOG.map(([code, desc, mA, verify]) => [code, { code, desc, mA, verify: !!verify }]));
+const COUPLERS = [
+  ['EK1100', 'EtherCAT coupler', 2000],
+  ['EK1101', 'EtherCAT coupler with ID switch', 2000],
+  ['EK1501', 'EtherCAT coupler, fiber optic', 2000],
+  ['EK1814', 'Coupler with 4 DI / 4 DO', 1000],
+  ['EK1818', 'Coupler with 8 DI / 4 DO', 1000],
+  ['EK1828', 'Coupler with 4 DI / 8 DO', 1000],
+  ['CX', 'CX controller (E-bus)', 2000],
+  ['OTHER', 'Other / custom supply', 2000],
+];
+const EL9410_SUPPLY = 2000;
+
+// ---------- state ----------
+let uidN = 1;
+const uid = () => 'u' + (uidN++) + Math.random().toString(36).slice(2, 6);
+function item(code, mA) {
+  const c = CAT[code];
+  return { uid: uid(), code, mA: mA ?? (c ? c.mA : 0), desc: c ? c.desc : 'Custom terminal' };
+}
+function many(code, n) { return Array.from({ length: n }, () => item(code)); }
+function exampleState() {
+  return {
+    reserve: 10,
+    segments: [
+      { id: uid(), name: 'Main panel', coupler: 'EK1100', supply: 2000, items: [
+        ...many('EL1008', 4), ...many('EL2008', 4), ...many('EL3204', 3), ...many('EL3064', 2), item('EL5101'), item('EL6751'), item('EL9100'), ...many('EL3054', 2),
+      ] },
+      { id: uid(), name: 'Conveyor box', coupler: 'EK1818', supply: 1000, items: [
+        ...many('EL1008', 2), item('EL2008'), item('EL7041'),
+      ] },
+    ],
+  };
+}
+const STORE_KEY = 'ebus-planner-v1';
+let state;
+try { const raw = localStorage.getItem(STORE_KEY); state = raw ? JSON.parse(raw) : null; } catch (e) { state = null; }
+if (!state || !Array.isArray(state.segments)) state = exampleState();
+function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} }
+let selected = null; // item uid
+const drafts = {}; // per segment add-row values
+
+// ---------- analysis ----------
+const isSupply = it => it.code === 'EL9410';
+function analyze(seg, reservePct) {
+  const r = reservePct / 100;
+  let source = seg.supply, budget = seg.supply;
+  let draw = 0, supplyTotal = seg.supply, minLeft = seg.supply, worst = 'ok';
+  const rows = seg.items.map(it => {
+    if (isSupply(it)) {
+      source = EL9410_SUPPLY; budget = EL9410_SUPPLY; supplyTotal += EL9410_SUPPLY;
+      return { it, left: budget, source, status: 'ok', feed: true };
+    }
+    budget -= it.mA; draw += it.mA;
+    const status = budget < 0 ? 'over' : budget < source * r ? 'low' : 'ok';
+    if (status === 'over') worst = 'over'; else if (status === 'low' && worst !== 'over') worst = 'low';
+    minLeft = Math.min(minLeft, budget);
+    return { it, left: budget, source, status, feed: false };
+  });
+  // Suggested EL9410 positions: simulate on the current order, existing EL9410s respected.
+  const sugg = []; // {before: index}
+  let impossible = [];
+  source = seg.supply; budget = seg.supply;
+  let sinceFeed = 0; // non-supply terminals since last source
+  seg.items.forEach((it, i) => {
+    if (isSupply(it)) { source = budget = EL9410_SUPPLY; sinceFeed = 0; return; }
+    const floor = source * r;
+    if (budget - it.mA < floor && sinceFeed > 0) {
+      sugg.push({ before: i });
+      source = budget = EL9410_SUPPLY; sinceFeed = 0;
+    }
+    budget -= it.mA; sinceFeed++;
+    if (budget < source * r && sinceFeed === 1) impossible.push(i);
+  });
+  return { rows, draw, supplyTotal, minLeft, worst, sugg, impossible, feeds: seg.items.filter(isSupply).length };
+}
+
+// ---------- rendering ----------
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const fmt = n => Math.round(n).toLocaleString('en-US');
+const famVar = code => {
+  const m = /^E[LK](\d)/.exec(code);
+  if (!m) return 'var(--fam-9)';
+  const d = m[1];
+  return ['1','2','3','4','5','6','7'].includes(d) ? `var(--fam-${d})` : 'var(--fam-9)';
+};
+const STATUS_TEXT = { ok: 'Within supply', low: 'Below reserve', over: 'Over supply' };
+
+function renderRail(seg, a) {
+  const suggAt = new Set(a.sugg.map(s => s.before));
+  const coupler = COUPLERS.find(c => c[0] === seg.coupler);
+  const cLabel = seg.coupler === 'OTHER' ? 'SUPPLY' : seg.coupler;
+  let html = `<div class="slice coupler" title="${esc(cLabel)}: ${fmt(seg.supply)} mA supply"><div class="body"><div class="stripe" style="--fam:var(--accent)"></div><div class="code">${esc(cLabel)}</div></div><div class="ma">${fmt(seg.supply)}</div><div class="meter"><i style="height:100%"></i></div></div>`;
+  a.rows.forEach((row, i) => {
+    if (suggAt.has(i)) {
+      html += `<div class="slice ghost" title="Suggested EL9410"><div class="body"><div class="stripe" style="--fam:transparent"></div><div class="code">EL9410</div></div><div class="ma">+2k</div><div class="meter"><i style="height:0"></i></div></div>`;
+    }
+    const pct = Math.max(0, Math.min(100, row.left / row.source * 100));
+    const cls = ['slice', row.status, row.feed ? 'feed' : '', selected === row.it.uid ? 'sel' : ''].join(' ');
+    const tip = row.feed ? `${row.it.code}: +${fmt(EL9410_SUPPLY)} mA` : `${row.it.code}: ${fmt(row.it.mA)} mA, ${fmt(row.left)} mA left`;
+    html += `<button type="button" class="${cls}" data-act="select" data-uid="${row.it.uid}" title="${esc(tip)}" aria-label="${esc(tip)}"><div class="body"><div class="stripe" style="--fam:${row.feed ? 'var(--accent)' : famVar(row.it.code)}"></div><div class="code">${esc(row.it.code)}</div></div><div class="ma">${row.feed ? '+2k' : fmt(row.it.mA)}</div><div class="meter"><i style="height:${pct}%"></i></div></button>`;
+  });
+  html += `<div class="slice endcap" title="End cap"><div class="body"></div></div>`;
+  return `<div class="rail-wrap"><div class="rail">${html}</div></div>`;
+}
+
+function renderAdvice(seg, a, idx) {
+  const res = state.reserve;
+  if (a.sugg.length === 0 && a.worst === 'ok') {
+    const head = a.feeds ? `with ${a.feeds} EL9410 in place` : 'on the coupler alone';
+    return `<div class="advice st-ok"><p>This segment runs ${head}. Lowest point: <span class="num">${fmt(a.minLeft)} mA</span> left.</p></div>`;
+  }
+  const items = seg.items;
+  const lines = a.sugg.map(s => {
+    const prev = items[s.before - 1], next = items[s.before];
+    return `<li>Insert an EL9410 between <strong>#${s.before} ${esc(prev.code)}</strong> and <strong>#${s.before + 1} ${esc(next.code)}</strong>.</li>`;
+  });
+  a.impossible.forEach(i => lines.push(`<li><strong>#${i + 1} ${esc(items[i].code)}</strong> draws more on its own than one supply can give with ${res} % reserve. Check its value or give it its own segment.</li>`));
+  const cls = a.worst === 'over' ? 'st-over' : a.worst === 'low' ? 'st-low' : 'st-ok';
+  let lead;
+  if (a.worst === 'over') lead = `This segment needs <span class="num">${fmt(-a.minLeft)} mA</span> more than its supply gives.`;
+  else if (a.worst === 'low') lead = `This segment stays within supply but dips under the ${res} % reserve.`;
+  else lead = `This segment is fine as built.`;
+  const fix = a.sugg.length ? `<div class="row"><span>${a.sugg.length === 1 ? 'One EL9410 fixes it' : `${a.sugg.length} EL9410s fix it`}:</span><button type="button" class="btn primary" data-act="apply-sugg" data-seg="${idx}">Insert ${a.sugg.length === 1 ? 'EL9410' : a.sugg.length + ' × EL9410'}</button></div>` : '';
+  return `<div class="advice ${cls}"><p>${lead}</p>${fix}${lines.length ? `<ul>${lines.join('')}</ul>` : ''}</div>`;
+}
+
+function renderTable(seg, a, idx) {
+  const suggAt = new Set(a.sugg.map(s => s.before));
+  const n = seg.items.length;
+  const body = a.rows.map((row, i) => {
+    const it = row.it, c = CAT[it.code];
+    const ghost = suggAt.has(i) ? `<tr class="ghost-row"><td></td><td colspan="5">Suggested EL9410 here (+${fmt(EL9410_SUPPLY)} mA)</td></tr>` : '';
+    const drawCell = row.feed
+      ? `<span class="num" style="color:var(--accent)">+${fmt(EL9410_SUPPLY)}</span>`
+      : `<input type="number" id="ma-${it.uid}" min="0" max="5000" step="5" value="${it.mA}" data-act="ma" data-seg="${idx}" data-uid="${it.uid}" aria-label="E-bus draw for ${esc(it.code)} at position ${i + 1}">`;
+    const leftCls = row.status === 'ok' ? '' : row.status;
+    return `${ghost}<tr class="${row.feed ? 'feed-row' : ''} ${selected === it.uid ? 'sel' : ''}" data-uid="${it.uid}">
+      <td class="pos num">${i + 1}</td>
+      <td><span class="term-code" style="--fam:${row.feed ? 'var(--accent)' : famVar(it.code)}"><b></b>${esc(it.code)}${c && c.verify ? '<span class="verify" title="Typical value not confirmed; check the datasheet">verify</span>' : ''}</span></td>
+      <td class="desc">${esc(it.desc)}</td>
+      <td class="num">${drawCell}</td>
+      <td class="left-cell ${leftCls}">${fmt(row.left)}</td>
+      <td class="actions">
+        <button type="button" class="icon-btn" data-act="up" data-seg="${idx}" data-uid="${it.uid}" ${i === 0 ? 'disabled' : ''} aria-label="Move ${esc(it.code)} left">↑</button>
+        <button type="button" class="icon-btn" data-act="down" data-seg="${idx}" data-uid="${it.uid}" ${i === n - 1 ? 'disabled' : ''} aria-label="Move ${esc(it.code)} right">↓</button>
+        <button type="button" class="icon-btn" data-act="remove" data-seg="${idx}" data-uid="${it.uid}" aria-label="Remove ${esc(it.code)}">×</button>
+      </td></tr>`;
+  }).join('');
+  return `<div class="table-wrap"><table>
+    <thead><tr><th class="pos">#</th><th>Terminal</th><th>Function</th><th class="num">Draw mA</th><th class="num">E-bus left mA</th><th class="actions"><span class="label" style="font-size:11px">Order</span></th></tr></thead>
+    <tbody>${body || `<tr class="empty"><td colspan="6">No terminals yet. Add the first one below.</td></tr>`}</tbody></table></div>`;
+}
+
+function renderSegment(seg, idx) {
+  const a = analyze(seg, state.reserve);
+  const d = drafts[seg.id] || { code: '', mA: '', qty: 1 };
+  const couplerOpts = COUPLERS.map(([code, desc, mA]) => `<option value="${code}" ${seg.coupler === code ? 'selected' : ''}>${code === 'OTHER' ? desc : `${code} — ${desc}`}</option>`).join('');
+  const usedPct = a.supplyTotal ? Math.round(a.draw / a.supplyTotal * 100) : 0;
+  return `<section class="segment" data-seg="${idx}">
+    <div class="seg-head">
+      <div class="seg-title">
+        <input class="seg-name" type="text" id="name-${seg.id}" value="${esc(seg.name)}" data-act="name" data-seg="${idx}" aria-label="Segment name">
+        <span class="pill st-${a.worst}">${STATUS_TEXT[a.worst]}</span>
+      </div>
+      <div class="seg-config">
+        <div class="field"><label class="label" for="cpl-${seg.id}">Coupler</label><select id="cpl-${seg.id}" data-act="coupler" data-seg="${idx}">${couplerOpts}</select></div>
+        <div class="field"><label class="label" for="sup-${seg.id}">E-bus supply mA</label><input type="number" id="sup-${seg.id}" min="0" step="50" value="${seg.supply}" data-act="supply" data-seg="${idx}"></div>
+      </div>
+    </div>
+    <div class="readout">
+      <div><span class="label">Total draw</span><span class="num">${fmt(a.draw)}<small>mA</small></span></div>
+      <div><span class="label">Supply incl. EL9410</span><span class="num">${fmt(a.supplyTotal)}<small>mA</small></span></div>
+      <div><span class="label">Lowest point left</span><span class="num" style="color:var(--${a.worst === 'ok' ? 'ink' : a.worst})">${fmt(a.minLeft)}<small>mA</small></span></div>
+      <div><span class="label">Terminals · used</span><span class="num">${seg.items.filter(i => !isSupply(i)).length}<small>· ${usedPct} %</small></span></div>
+    </div>
+    ${renderRail(seg, a)}
+    <div class="rail-legend">
+      <span><b style="background:var(--fam-1)"></b>EL1 inputs</span><span><b style="background:var(--fam-2)"></b>EL2 outputs</span>
+      <span><b style="background:var(--fam-3)"></b>EL3 analog in</span><span><b style="background:var(--fam-4)"></b>EL4 analog out</span>
+      <span><b style="background:var(--fam-5)"></b>EL5 position</span><span><b style="background:var(--fam-6)"></b>EL6 comms</span>
+      <span><b style="background:var(--fam-7)"></b>EL7 motion</span><span><b style="border:2px dashed var(--accent)"></b>Suggested EL9410</span>
+      <span>Bars show E-bus left after each slice.</span>
+    </div>
+    ${renderAdvice(seg, a, idx)}
+    ${renderTable(seg, a, idx)}
+    <form class="add-row" data-seg="${idx}">
+      <div class="field"><label class="label" for="code-${seg.id}">Terminal</label><input list="catalog" type="text" id="code-${seg.id}" placeholder="EL3204 or any part no." value="${esc(d.code)}" data-act="draft-code" data-seg="${idx}" autocomplete="off"></div>
+      <div class="field"><label class="label" for="ma-in-${seg.id}">Draw mA</label><input class="ma-in" type="number" id="ma-in-${seg.id}" min="0" max="5000" step="5" value="${esc(d.mA)}" data-act="draft-ma" data-seg="${idx}"></div>
+      <div class="field"><label class="label" for="qty-${seg.id}">Qty</label><input class="qty-in" type="number" id="qty-${seg.id}" min="1" max="64" value="${d.qty}" data-act="draft-qty" data-seg="${idx}"></div>
+      <button class="btn primary" type="submit">Add to end</button>
+      <div class="hint" id="hint-${seg.id}">${hintFor(d.code)}</div>
+    </form>
+    <div class="seg-foot">
+      <button type="button" class="btn" data-act="clear" data-seg="${idx}">Clear terminals</button>
+      <button type="button" class="btn" data-act="del-seg" data-seg="${idx}">${pendingDelete === seg.id ? 'Click again to delete segment' : 'Delete segment'}</button>
+    </div>
+  </section>`;
+}
+function hintFor(code) {
+  const c = CAT[normCode(code)];
+  if (!code) return 'Pick from the list or type any part number. Unknown parts need a draw value.';
+  if (c) return c.code === 'EL9410' ? 'Adds a fresh 2,000 mA for the terminals after it.' : `${esc(c.desc)} · typ. ${c.mA} mA${c.verify ? ' (verify)' : ''}`;
+  return 'Not in the catalog. Enter its E-bus draw from the datasheet.';
+}
+const normCode = s => (s || '').trim().split(/\s+/)[0].toUpperCase();
+
+let pendingDelete = null;
+function render() {
+  $('#reserve').value = String(state.reserve);
+  const ae = document.activeElement, focusId = ae && ae.id, selStart = ae && ae.selectionStart;
+  $('#segments').innerHTML = state.segments.length ? state.segments.map(renderSegment).join('') :
+    `<div class="segment" style="padding:24px;text-align:center;color:var(--muted)">No segments. Add one to start.</div>`;
+  if (focusId) { const el = document.getElementById(focusId); if (el) { el.focus(); try { if (selStart != null) el.setSelectionRange(selStart, selStart); } catch (e) {} } }
+  save();
+}
+
+// ---------- actions ----------
+function seg(i) { return state.segments[+i]; }
+function moveItem(s, uidv, dir) {
+  const i = s.items.findIndex(x => x.uid === uidv), j = i + dir;
+  if (i < 0 || j < 0 || j >= s.items.length) return;
+  [s.items[i], s.items[j]] = [s.items[j], s.items[i]];
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (!b || b.tagName === 'INPUT' || b.tagName === 'SELECT') return;
+  const s = seg(b.dataset.seg), act = b.dataset.act;
+  if (act !== 'del-seg') pendingDelete = null;
+  if (act === 'select') { selected = selected === b.dataset.uid ? null : b.dataset.uid; render(); const row = document.querySelector(`tr[data-uid="${selected}"]`); if (row) row.scrollIntoView({ block: 'nearest' }); return; }
+  if (act === 'up') moveItem(s, b.dataset.uid, -1);
+  if (act === 'down') moveItem(s, b.dataset.uid, 1);
+  if (act === 'remove') s.items = s.items.filter(x => x.uid !== b.dataset.uid);
+  if (act === 'clear') s.items = [];
+  if (act === 'apply-sugg') {
+    const a = analyze(s, state.reserve);
+    a.sugg.map(x => x.before).sort((p, q) => q - p).forEach(i => s.items.splice(i, 0, item('EL9410')));
+    toast(`Inserted ${a.sugg.length} × EL9410`);
+  }
+  if (act === 'del-seg') {
+    const id = state.segments[+b.dataset.seg].id;
+    if (pendingDelete === id) { state.segments.splice(+b.dataset.seg, 1); pendingDelete = null; toast('Segment deleted'); }
+    else pendingDelete = id;
+  }
+  render();
+});
+document.addEventListener('change', e => {
+  const t = e.target, act = t.dataset && t.dataset.act; if (!act) return;
+  const s = seg(t.dataset.seg);
+  if (act === 'ma') { const it = s.items.find(x => x.uid === t.dataset.uid); it.mA = Math.max(0, +t.value || 0); }
+  if (act === 'supply') s.supply = Math.max(0, +t.value || 0);
+  if (act === 'coupler') { s.coupler = t.value; const c = COUPLERS.find(x => x[0] === t.value); if (c) s.supply = c[2]; }
+  if (act === 'name') s.name = t.value.trim() || 'Segment';
+  if (act.startsWith('draft')) return;
+  render();
+});
+document.addEventListener('input', e => {
+  const t = e.target, act = t.dataset && t.dataset.act; if (!act || !act.startsWith('draft')) return;
+  const s = seg(t.dataset.seg); const d = drafts[s.id] || (drafts[s.id] = { code: '', mA: '', qty: 1 });
+  if (act === 'draft-code') {
+    d.code = t.value;
+    const c = CAT[normCode(t.value)];
+    const maIn = document.getElementById('ma-in-' + s.id);
+    if (c) { d.mA = c.mA; maIn.value = c.mA; }
+    document.getElementById('hint-' + s.id).innerHTML = hintFor(t.value);
+  }
+  if (act === 'draft-ma') d.mA = t.value;
+  if (act === 'draft-qty') d.qty = t.value;
+});
+document.addEventListener('submit', e => {
+  const f = e.target.closest('form.add-row'); if (!f) return;
+  e.preventDefault();
+  const s = seg(f.dataset.seg);
+  const code = normCode(document.getElementById('code-' + s.id).value);
+  const maRaw = document.getElementById('ma-in-' + s.id).value;
+  const qty = Math.max(1, Math.min(64, parseInt(document.getElementById('qty-' + s.id).value, 10) || 1));
+  const hint = document.getElementById('hint-' + s.id);
+  if (!code) { hint.textContent = 'Enter a terminal part number first.'; return; }
+  const c = CAT[code];
+  if (!c && maRaw === '') { hint.textContent = `${code} is not in the catalog. Enter its E-bus draw in mA, then add it.`; document.getElementById('ma-in-' + s.id).focus(); return; }
+  const mA = code === 'EL9410' ? 0 : Math.max(0, +maRaw || 0);
+  for (let k = 0; k < qty; k++) { const it = item(code, mA); if (!c) it.desc = 'Custom terminal'; s.items.push(it); }
+  drafts[s.id] = { code: '', mA: '', qty: 1 };
+  render();
+  document.getElementById('code-' + s.id).focus();
+});
+$('#reserve').addEventListener('change', e => { state.reserve = +e.target.value; render(); });
+$('#add-seg').addEventListener('click', () => {
+  state.segments.push({ id: uid(), name: `Segment ${state.segments.length + 1}`, coupler: 'EK1100', supply: 2000, items: [] });
+  render();
+  const last = state.segments[state.segments.length - 1];
+  const el = document.getElementById('code-' + last.id); if (el) { el.scrollIntoView({ block: 'center' }); el.focus(); }
+});
+let exampleArmed = false;
+$('#load-example').addEventListener('click', e => {
+  if (!exampleArmed) { exampleArmed = true; e.target.textContent = 'Replace my segments?'; setTimeout(() => { exampleArmed = false; e.target.textContent = 'Load example'; }, 3500); return; }
+  exampleArmed = false; e.target.textContent = 'Load example';
+  state = exampleState(); selected = null; render(); toast('Example loaded');
+});
+$('#copy-bom').addEventListener('click', async () => {
+  const lines = [];
+  state.segments.forEach(s => {
+    const a = analyze(s, state.reserve);
+    lines.push(`${s.name} — ${s.coupler === 'OTHER' ? 'custom supply' : s.coupler} (${fmt(s.supply)} mA)`);
+    const counts = new Map();
+    s.items.forEach(it => counts.set(it.code, (counts.get(it.code) || 0) + 1));
+    counts.forEach((n, code) => lines.push(`  ${n} × ${code}`));
+    lines.push(`  Draw ${fmt(a.draw)} mA of ${fmt(a.supplyTotal)} mA · ${STATUS_TEXT[a.worst]}${a.sugg.length ? ` · needs ${a.sugg.length} more EL9410` : ''}`);
+    lines.push('');
+  });
+  const text = lines.join('\n').trim();
+  try { await navigator.clipboard.writeText(text); toast('Parts list copied'); }
+  catch (err) {
+    const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;left:16px;right:16px;bottom:70px;height:40vh;z-index:5';
+    document.body.appendChild(ta); ta.select(); toast('Select-all is done. Press Ctrl+C, then click away.');
+    ta.addEventListener('blur', () => ta.remove());
+  }
+});
+let toastT;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600); }
+
+$('#catalog').innerHTML = CATALOG.map(([code, desc, mA]) => `<option value="${code}">${esc(desc)} · ${mA} mA</option>`).join('');
+render();
+</script>
+</body>
+</html>
