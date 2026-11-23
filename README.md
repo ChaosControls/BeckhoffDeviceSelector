@@ -2,10 +2,13 @@
 
 **E-Bus Segment Planner**: a single-page web calculator for Beckhoff EtherCAT terminal segments.
 
-- Pick the EL terminals behind each EK coupler (EK1100, EK1101, EK1501, EK18xx, CX or a custom supply) in rail order.
-- Totals E-bus current draw per segment and shows the current left after every slice.
+- Choose the bus coupler first (EK1100, EK1101, EK1501, EK18xx, EK9xxx, CX, BK K-bus couplers or a custom supply). Device selection unlocks once it is on the fieldbus; select the coupler and press **Change** to swap it.
+- The **Device** dropdown keeps your 8 most recent devices. **List** opens a searchable window of about 630 EL / ES / ELM / ELX / KL / EP devices plus extensions such as the EK1110 and EK1122; pick one, press **Select**, then **Add** to drop it into the last open slot.
+- In the fieldbus window, click a device to select it, drag it to change the order (or Shift + arrow keys), and press **Remove** to delete it.
+- Totals E-bus and K-bus (after a BK1250) current per segment and shows the current left after every slice.
 - Flags segments that run past the coupler's supply, or below an optional reserve (5–20 %).
-- Marks where an EL9410 should go and can insert it for you.
+- Marks where an EL9410 (or KL9400 on K-bus) should go and can insert it for you.
+- Flags layout problems: KL terminals without a K-bus source, devices after an EK1110, rail devices after an EP box.
 - Copies a parts list per segment to the clipboard.
 
 ## Use

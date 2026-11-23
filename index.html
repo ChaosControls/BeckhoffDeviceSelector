@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: one column of coupler segments; each shows a DIN-rail strip, a budget readout, then the editable terminal list. */
+/* Layout: one column of coupler segments; each has a control bar, a budget readout, the fieldbus window (DIN rail), then the device table. */
 :root {
   --bg: #e9ecef;
   --surface: #f8f9fa;
@@ -19,12 +19,16 @@
   --accent: #0a6c96;
   --accent-ink: #ffffff;
   --housing: #d5d9dd;
+  --housing-k: #c9cdc2;
+  --box: #3a4148;
+  --box-ink: #eef1f3;
   --ok: #1d7a4c;
   --ok-bg: #d8efe2;
   --low: #9a6200;
   --low-bg: #fbecc9;
   --over: #b3261e;
   --over-bg: #f8d9d6;
+  --scrim: rgba(18, 24, 30, .45);
   --fam-1: #d9a400; --fam-2: #d8541d; --fam-3: #2f7fc1; --fam-4: #7a4fbf;
   --fam-5: #1c9a8a; --fam-6: #5d6b78; --fam-7: #b23a74; --fam-9: #3c4650;
   --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
@@ -34,16 +38,20 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #12171c; --surface: #1a2027; --surface-2: #232a32; --ink: #e6eaee; --muted: #97a2ad;
-    --line: #333c46; --accent: #4fb3e0; --accent-ink: #08202c; --housing: #2c343d;
+    --line: #333c46; --accent: #4fb3e0; --accent-ink: #08202c; --housing: #2c343d; --housing-k: #33362c;
+    --box: #0c1014; --box-ink: #d6dde3;
     --ok: #5fd197; --ok-bg: #173628; --low: #f1bd4f; --low-bg: #3a2d10; --over: #ff8a80; --over-bg: #43201d;
+    --scrim: rgba(0, 0, 0, .6);
     --fam-9: #8a96a2; --fam-6: #8794a1;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #12171c; --surface: #1a2027; --surface-2: #232a32; --ink: #e6eaee; --muted: #97a2ad;
-  --line: #333c46; --accent: #4fb3e0; --accent-ink: #08202c; --housing: #2c343d;
+  --line: #333c46; --accent: #4fb3e0; --accent-ink: #08202c; --housing: #2c343d; --housing-k: #33362c;
+  --box: #0c1014; --box-ink: #d6dde3;
   --ok: #5fd197; --ok-bg: #173628; --low: #f1bd4f; --low-bg: #3a2d10; --over: #ff8a80; --over-bg: #43201d;
+  --scrim: rgba(0, 0, 0, .6);
   --fam-9: #8a96a2; --fam-6: #8794a1;
   color-scheme: dark;
 }
@@ -58,48 +66,55 @@ body {
 h1, h2 { font-family: var(--font-display); text-wrap: balance; margin: 0; letter-spacing: .01em; }
 h1 { font-size: clamp(30px, 5vw, 42px); font-weight: 700; line-height: 1.05; }
 h2 { font-size: 24px; font-weight: 600; }
-.lede { color: var(--muted); max-width: 66ch; margin: 6px 0 0; }
+.lede { color: var(--muted); max-width: 70ch; margin: 6px 0 0; }
 .mono, .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
 
 button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.btn {
-  border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 7px 12px; font-weight: 500;
-}
-.btn:hover { border-color: var(--accent); }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 6px 12px; font-weight: 500; white-space: nowrap; }
+.btn:hover:not(:disabled) { border-color: var(--accent); }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-.btn.primary:hover { filter: brightness(1.08); }
-.icon-btn { border: 1px solid transparent; background: none; border-radius: 4px; width: 28px; height: 28px; color: var(--muted); }
-.icon-btn:hover { border-color: var(--line); color: var(--ink); }
-.icon-btn:disabled { opacity: .3; cursor: default; border-color: transparent; }
-input[type=text], input[type=number], select {
+.btn.primary:hover:not(:disabled) { filter: brightness(1.08); }
+.btn:disabled, select:disabled, input:disabled { opacity: .45; cursor: not-allowed; }
+.btn.danger:hover:not(:disabled) { border-color: var(--over); color: var(--over); }
+input[type=text], input[type=number], input[type=search], select {
   background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; min-width: 0;
 }
 input[type=number] { font-family: var(--font-mono); }
 
 .toolbar { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: end; justify-content: space-between; }
-.toolbar .field { display: grid; gap: 4px; }
+.field { display: grid; gap: 3px; min-width: 0; }
 .toolbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .segment { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-.seg-head { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: end; justify-content: space-between; padding: 16px 18px 14px; }
+.seg-head { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; justify-content: space-between; padding: 14px 18px 10px; }
 .seg-title { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-.seg-name { font-family: var(--font-display); font-size: 24px; font-weight: 600; border: 1px solid transparent; background: none; padding: 0 4px; width: 9.5em; }
-.seg-name:hover, .seg-name:focus { border-color: var(--line); background: var(--surface); }
-.seg-config { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
-.seg-config .field { display: grid; gap: 3px; }
-.seg-config input[type=number] { width: 96px; }
+.seg-name { font-family: var(--font-display); font-size: 24px; font-weight: 600; border: 1px solid transparent !important; background: none !important; padding: 0 4px !important; width: 9.5em; }
+.seg-name:hover, .seg-name:focus { border-color: var(--line) !important; background: var(--surface-2) !important; }
+.seg-meta { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; color: var(--muted); font-size: 13px; }
+.seg-meta input { width: 92px; }
+
+/* control bar */
+.controls { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: end; padding: 4px 18px 14px; }
+.ctl-group { display: flex; gap: 6px; align-items: end; flex-wrap: wrap; min-width: 0; }
+.ctl-group select { width: 250px; max-width: 100%; }
+.ctl-group .step { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--accent); width: 20px; align-self: center; padding-top: 16px; }
+.ctl-group.off .step { color: var(--muted); }
+.list-btn { display: inline-flex; gap: 6px; align-items: center; }
+.list-btn svg { width: 16px; height: 16px; }
 
 .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; }
 .pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 .st-ok { color: var(--ok); background: var(--ok-bg); }
 .st-low { color: var(--low); background: var(--low-bg); }
-.st-over { color: var(--over); background: var(--over-bg); }
+.st-over, .st-bad { color: var(--over); background: var(--over-bg); }
+.st-none { color: var(--muted); background: var(--surface-2); }
 
-.readout { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--surface-2); }
-.readout > div { padding: 10px 18px; display: grid; gap: 1px; }
+.readout { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line); background: var(--surface-2); }
+.readout + .readout { border-top-style: dashed; }
+.readout > div { padding: 9px 18px; display: grid; gap: 1px; }
 .readout > div + div { border-left: 1px solid var(--line); }
 .readout .num { font-size: 20px; font-weight: 500; }
 .readout .num small { font-size: 12px; color: var(--muted); margin-left: 3px; }
@@ -109,79 +124,121 @@ input[type=number] { font-family: var(--font-mono); }
   .readout > div:nth-child(n+3) { border-top: 1px solid var(--line); }
 }
 
-/* DIN rail strip */
-.rail-wrap { overflow-x: auto; padding: 18px 18px 10px; }
-.rail { position: relative; display: flex; align-items: flex-start; gap: 2px; width: max-content; padding-bottom: 6px; }
+/* fieldbus window */
+.fieldbus { border-top: 1px solid var(--line); }
+.fb-head { display: flex; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; align-items: baseline; padding: 10px 18px 0; }
+.fb-head .hint { font-size: 12px; color: var(--muted); }
+.rail-wrap { overflow-x: auto; padding: 14px 18px 10px; }
+.rail { position: relative; display: flex; align-items: flex-start; gap: 2px; width: max-content; min-width: 100%; padding-bottom: 6px; }
 .rail::before { content: ""; position: absolute; left: -6px; right: -6px; top: 52px; height: 22px; background: repeating-linear-gradient(90deg, var(--line) 0 10px, transparent 10px 25px), var(--surface-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); z-index: 0; }
-.slice { position: relative; z-index: 1; width: 30px; display: grid; gap: 6px; justify-items: center; cursor: pointer; background: none; border: 0; padding: 0; }
-.slice .body { width: 100%; height: 126px; background: var(--housing); border: 1px solid var(--line); border-radius: 3px 3px 2px 2px; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
+.slice { position: relative; z-index: 1; width: 30px; display: grid; gap: 6px; justify-items: center; background: none; border: 0; padding: 0; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: none; }
+.slice .body { width: 100%; height: 126px; background: var(--housing); border: 1px solid var(--line); border-radius: 3px 3px 2px 2px; display: flex; flex-direction: column; align-items: center; overflow: hidden; position: relative; }
 .slice .stripe { width: 100%; height: 8px; background: var(--fam, var(--fam-9)); flex: none; }
 .slice .code { writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--font-display); font-weight: 600; font-size: 14px; letter-spacing: .04em; margin-top: 8px; white-space: nowrap; }
-.slice .ma { font-family: var(--font-mono); font-size: 10px; color: var(--muted); height: 14px; }
+.slice .ma { font-family: var(--font-mono); font-size: 10px; color: var(--muted); height: 14px; white-space: nowrap; }
 .slice .meter { width: 8px; height: 46px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 2px; position: relative; overflow: hidden; }
 .slice .meter i { position: absolute; left: 0; right: 0; bottom: 0; background: var(--ok); }
 .slice.low .meter i { background: var(--low); }
-.slice.over .meter i { background: var(--over); height: 100% !important; opacity: .85; }
-.slice.over .body { border-color: var(--over); box-shadow: inset 0 0 0 1px var(--over); }
+.slice.over .meter i, .slice.bad .meter i { background: var(--over); height: 100% !important; opacity: .85; }
+.slice.over .body, .slice.bad .body { border-color: var(--over); box-shadow: inset 0 0 0 1px var(--over); }
+.slice.bad .body::after { content: "!"; position: absolute; bottom: 4px; left: 0; right: 0; text-align: center; font-weight: 700; color: var(--over); }
+.slice.kbus .body { background: var(--housing-k); }
 .slice.coupler { width: 58px; }
 .slice.coupler .body { background: var(--surface-2); }
 .slice.coupler .code { font-size: 17px; }
 .slice.feed .body { outline: 2px solid var(--accent); outline-offset: -2px; }
+.slice.ghost { cursor: default; }
 .slice.ghost .body { background: transparent; border: 2px dashed var(--accent); }
-.slice.ghost .code { color: var(--accent); }
-.slice.ghost .ma { color: var(--accent); }
-.slice.sel .body { box-shadow: 0 0 0 2px var(--ink); }
+.slice.ghost .code, .slice.ghost .ma { color: var(--accent); }
+.slice.sel .body { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ink); }
 .slice.endcap { width: 14px; cursor: default; }
 .slice.endcap .body { background: var(--surface-2); }
+.slice.box { width: 44px; margin-top: 18px; }
+.slice.box .body { height: 90px; background: var(--box); border-color: var(--box); border-radius: 6px; color: var(--box-ink); }
+.slice.box .code { font-size: 13px; }
+.slice.dragging { z-index: 5; opacity: .85; cursor: grabbing; }
+.slice.dragging .body { box-shadow: 0 8px 18px rgba(0,0,0,.25); }
+.cable { position: relative; z-index: 1; width: 26px; height: 126px; display: flex; align-items: center; }
+.cable::before { content: ""; width: 100%; height: 0; border-top: 3px dotted var(--muted); margin-top: 10px; }
+.drop-marker { position: absolute; top: -4px; width: 3px; height: 140px; background: var(--accent); border-radius: 2px; z-index: 6; pointer-events: none; }
+.empty-slot { position: relative; z-index: 1; height: 126px; min-width: 230px; border: 2px dashed var(--line); border-radius: 6px; display: grid; place-items: center; color: var(--muted); font-size: 13px; padding: 0 16px; background: var(--surface); text-align: center; }
 .rail-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 0 18px 12px; font-size: 12px; color: var(--muted); }
 .rail-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .rail-legend b { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
 
 /* advice */
-.advice { margin: 0 18px 14px; padding: 12px 14px; border-radius: 8px; display: grid; gap: 8px; }
-.advice.st-over { background: var(--over-bg); color: var(--ink); }
-.advice.st-low { background: var(--low-bg); color: var(--ink); }
-.advice.st-ok { background: var(--ok-bg); color: var(--ink); }
+.advice { margin: 0 18px 14px; padding: 12px 14px; border-radius: 8px; display: grid; gap: 8px; color: var(--ink); }
+.advice.st-over, .advice.st-bad { background: var(--over-bg); }
+.advice.st-low { background: var(--low-bg); }
+.advice.st-ok { background: var(--ok-bg); }
+.advice.st-none { background: var(--surface-2); }
 .advice p { margin: 0; }
 .advice ul { margin: 0; padding-left: 20px; display: grid; gap: 2px; }
 .advice .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
 
 /* table */
 .table-wrap { overflow-x: auto; border-top: 1px solid var(--line); }
-table { width: 100%; border-collapse: collapse; min-width: 640px; }
+table { width: 100%; border-collapse: collapse; }
+.dev-table { min-width: 640px; }
 th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
 th { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; background: var(--surface); }
 td.num, th.num { text-align: right; }
-tbody tr:hover { background: var(--surface-2); }
-tr.sel { background: var(--surface-2); }
-tr.ghost-row td { color: var(--accent); border-bottom-style: dashed; font-size: 13px; background: transparent; }
+.dev-table tbody tr { cursor: pointer; }
+.dev-table tbody tr:hover { background: var(--surface-2); }
+.dev-table tr.sel { background: var(--surface-2); box-shadow: inset 3px 0 0 var(--ink); }
+tr.ghost-row td { color: var(--accent); border-bottom-style: dashed; font-size: 13px; }
 tr.feed-row td { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+tr.bad-row td { background: var(--over-bg); }
 .pos { color: var(--muted); width: 36px; }
-.term-code { font-family: var(--font-display); font-weight: 600; font-size: 17px; letter-spacing: .03em; display: inline-flex; align-items: center; gap: 8px; }
+.term-code { font-family: var(--font-display); font-weight: 600; font-size: 17px; letter-spacing: .03em; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .term-code b { width: 4px; height: 16px; border-radius: 1px; background: var(--fam, var(--fam-9)); }
 .desc { color: var(--muted); font-size: 13px; }
+.bus-tag { font-family: var(--font-mono); font-size: 11px; border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; color: var(--muted); white-space: nowrap; }
 .verify { font-size: 11px; color: var(--low); border: 1px solid currentColor; border-radius: 4px; padding: 0 4px; margin-left: 6px; font-family: var(--font-body); font-weight: 600; letter-spacing: 0; }
 td input[type=number] { width: 84px; text-align: right; }
 .left-cell { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 .left-cell.low { color: var(--low); font-weight: 500; }
-.left-cell.over { color: var(--over); font-weight: 600; }
-.actions { white-space: nowrap; text-align: right; width: 104px; }
-.empty td { color: var(--muted); padding: 18px 10px; text-align: center; }
-
-.add-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; padding: 14px 18px 16px; background: var(--surface-2); }
-.add-row .field { display: grid; gap: 3px; }
-.add-row input[list] { width: 230px; }
-.add-row input.ma-in { width: 90px; }
-.add-row input.qty-in { width: 64px; }
-.add-row .hint { font-size: 12px; color: var(--muted); flex-basis: 100%; min-height: 18px; }
+.left-cell.over, .left-cell.bad { color: var(--over); font-weight: 600; }
+.empty td { color: var(--muted); padding: 18px 10px; text-align: center; cursor: default; }
 .seg-foot { display: flex; justify-content: space-between; padding: 10px 18px; gap: 8px; flex-wrap: wrap; }
+
+/* device list window */
+.modal-back { position: fixed; inset: 0; background: var(--scrim); z-index: 20; display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.modal { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; width: min(860px, 100%); max-height: min(760px, 100%); display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto auto; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,.3); }
+.m-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px 8px; gap: 12px; }
+.m-close { border: 1px solid transparent; background: none; width: 32px; height: 32px; border-radius: 6px; font-size: 20px; line-height: 1; color: var(--muted); }
+.m-close:hover { border-color: var(--line); color: var(--ink); }
+.m-filters { display: grid; gap: 10px; padding: 0 18px 12px; border-bottom: 1px solid var(--line); }
+.m-filters input[type=search] { width: 100%; font-size: 16px; padding: 8px 10px; }
+.m-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 3px 11px; font-size: 13px; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.m-row select { margin-left: auto; }
+.m-results { overflow: auto; min-height: 160px; }
+.m-results table { min-width: 560px; }
+.m-results th { position: sticky; top: 0; z-index: 1; }
+.m-results tbody tr { cursor: pointer; }
+.m-results tbody tr:hover { background: var(--surface-2); }
+.m-results tr.hl { background: color-mix(in srgb, var(--accent) 16%, transparent); box-shadow: inset 3px 0 0 var(--accent); }
+.m-count { font-size: 12px; color: var(--muted); padding: 8px 18px; border-top: 1px solid var(--line); }
+.m-custom { padding: 0 18px 10px; font-size: 13px; }
+.m-custom summary { cursor: pointer; color: var(--accent); font-weight: 500; padding: 4px 0; }
+.m-custom .m-row { padding-top: 6px; align-items: end; }
+.m-custom input[type=text] { width: 150px; }
+.m-custom input[type=number] { width: 90px; }
+.m-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 18px; border-top: 1px solid var(--line); background: var(--surface-2); }
+.m-picked { font-size: 14px; min-width: 0; }
+.m-picked strong { font-family: var(--font-display); font-size: 18px; letter-spacing: .03em; }
+.m-foot .btns { display: flex; gap: 8px; margin-left: auto; }
 
 .notes { color: var(--muted); font-size: 13px; max-width: 80ch; display: grid; gap: 6px; }
 .notes p { margin: 0; }
-.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 6px; font-size: 14px; }
-@media (max-width: 520px) {
-  .add-row input[list] { width: 100%; }
-  .add-row .field:first-child { flex-basis: 100%; }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 6px; font-size: 14px; z-index: 30; }
+@media (max-width: 560px) {
+  .ctl-group select { width: 100%; }
+  .ctl-group { width: 100%; }
+  .ctl-group .grow { flex: 1 1 160px; }
+  .m-row select { margin-left: 0; width: 100%; }
 }
 @media (prefers-reduced-motion: no-preference) {
   .slice .meter i { transition: height .25s ease; }
@@ -193,7 +250,7 @@ td input[type=number] { width: 84px; text-align: right; }
 <div class="wrap">
   <header>
     <h1>E-Bus Segment Planner</h1>
-    <p class="lede">List the EL terminals behind each EK coupler in rail order. The planner adds up E-bus current, flags any segment that runs past its supply, and marks where an EL9410 should go to refresh it.</p>
+    <p class="lede">Start each segment by choosing its bus coupler, then add devices to the fieldbus in rail order. The planner adds up E-bus and K-bus current, flags any segment that runs past its supply, and marks where an EL9410 (or KL9400) should go.</p>
   </header>
 
   <div class="toolbar">
@@ -216,351 +273,1141 @@ td input[type=number] { width: 84px; text-align: right; }
 
   <div id="segments" class="wrap"></div>
 
-  <datalist id="catalog"></datalist>
-
   <section class="notes">
-    <p><strong>How the budget is counted.</strong> Each coupler (or CX controller) feeds the E-bus terminals to its right. An EL9410 counts as a fresh 2,000 mA for the terminals after it, and the coupler's leftover current is not carried past it. That is the conservative reading. "Reserve" holds back a share of each supply so the segment isn't planned right up to the limit.</p>
-    <p><strong>Current values.</strong> The catalog uses typical E-bus draws from Beckhoff datasheets. Values marked <span class="verify">verify</span> are less certain. Edit any draw in the table, and compare against the E-Bus column in TwinCAT after scanning the real hardware.</p>
+    <p><strong>How the budget is counted.</strong> The coupler feeds the E-bus terminals to its right. An EL9410 counts as a fresh 2,000 mA for the terminals after it, and the coupler's leftover is not carried past it. A BK1250 starts a K-bus section for KL terminals, refreshed by a KL9400. EP boxes hang off the EtherCAT cable and draw no E-bus current. "Reserve" holds back a share of each supply.</p>
+    <p><strong>Current values.</strong> Draws are typical values from Beckhoff datasheets. Values marked <span class="verify">verify</span> are estimates for that product family. Edit any draw in the table, and compare against the E-Bus column in TwinCAT after scanning the real hardware.</p>
   </section>
+</div>
+
+<div class="modal-back" id="modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="m-title">
+    <div class="m-head">
+      <h2 id="m-title">Device list</h2>
+      <button type="button" class="m-close" id="m-close" aria-label="Close device list">×</button>
+    </div>
+    <div class="m-filters">
+      <input type="search" id="m-search" placeholder="Search part number or function, e.g. EL3204, PT100, relay" autocomplete="off">
+      <div class="m-row" id="m-bus" role="group" aria-label="Device family">
+        <button type="button" class="chip" data-bus="all" aria-pressed="true">All</button>
+        <button type="button" class="chip" data-bus="E" aria-pressed="false">EL / ES / ELM (E-bus)</button>
+        <button type="button" class="chip" data-bus="K" aria-pressed="false">KL (K-bus)</button>
+        <button type="button" class="chip" data-bus="box" aria-pressed="false">EP boxes</button>
+        <button type="button" class="chip" data-bus="sys" aria-pressed="false">Extensions &amp; power</button>
+        <select id="m-func" aria-label="Function">
+          <option value="all">All functions</option>
+          <option value="1">Digital input</option>
+          <option value="2">Digital output</option>
+          <option value="3">Analog input</option>
+          <option value="4">Analog output</option>
+          <option value="5">Position / encoder</option>
+          <option value="6">Communication</option>
+          <option value="7">Motion</option>
+          <option value="9">System &amp; power</option>
+        </select>
+      </div>
+    </div>
+    <div class="m-results" id="m-results"></div>
+    <div class="m-count" id="m-count"></div>
+    <details class="m-custom" id="m-custom">
+      <summary>Part not listed? Add it by hand</summary>
+      <div class="m-row">
+        <div class="field"><label class="label" for="c-code">Part no.</label><input type="text" id="c-code" placeholder="EL1234-0010" autocomplete="off"></div>
+        <div class="field"><label class="label" for="c-ma">Bus draw mA</label><input type="number" id="c-ma" min="0" max="5000" step="5" value="100"></div>
+        <div class="field"><label class="label" for="c-bus">Bus</label><select id="c-bus"><option value="E">E-bus (EL)</option><option value="K">K-bus (KL)</option><option value="box">EP box (off-rail)</option></select></div>
+        <button type="button" class="btn" id="c-use">Use this part</button>
+      </div>
+    </details>
+    <div class="m-foot">
+      <div class="m-picked" id="m-picked">Pick a device from the list.</div>
+      <div class="btns">
+        <button type="button" class="btn" id="m-cancel">Cancel</button>
+        <button type="button" class="btn primary" id="m-select" disabled>Select</button>
+      </div>
+    </div>
+  </div>
 </div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
-// ---------- catalog ----------
-// [code, description, typical E-bus mA, verify?]
-const CATALOG = [
-  ['EL1002', '2-ch digital input 24 V DC', 90],
-  ['EL1004', '4-ch digital input 24 V DC', 90],
-  ['EL1008', '8-ch digital input 24 V DC', 90],
-  ['EL1018', '8-ch digital input 24 V DC, 10 µs', 90],
-  ['EL1088', '8-ch digital input 24 V DC, ground switching', 90],
-  ['EL1809', '16-ch digital input 24 V DC', 100],
-  ['EL1819', '16-ch digital input 24 V DC, 10 µs', 100],
-  ['EL2002', '2-ch digital output 24 V DC, 0.5 A', 100],
-  ['EL2004', '4-ch digital output 24 V DC, 0.5 A', 100],
-  ['EL2008', '8-ch digital output 24 V DC, 0.5 A', 110],
-  ['EL2088', '8-ch digital output 24 V DC, ground switching', 110],
-  ['EL2809', '16-ch digital output 24 V DC, 0.5 A', 140],
-  ['EL3002', '2-ch analog input ±10 V, 12 bit', 130],
-  ['EL3004', '4-ch analog input ±10 V, 12 bit', 130],
-  ['EL3008', '8-ch analog input ±10 V, 12 bit', 130],
-  ['EL3052', '2-ch analog input 4…20 mA, 12 bit', 130],
-  ['EL3054', '4-ch analog input 4…20 mA, 12 bit', 130],
-  ['EL3062', '2-ch analog input 0…10 V, 12 bit', 130],
-  ['EL3064', '4-ch analog input 0…10 V, 12 bit', 130],
-  ['EL3102', '2-ch analog input ±10 V, differential, 16 bit', 130],
-  ['EL3104', '4-ch analog input ±10 V, differential, 16 bit', 130],
-  ['EL3202', '2-ch RTD input, PT100', 190],
-  ['EL3204', '4-ch RTD input, PT100', 190],
-  ['EL3312', '2-ch thermocouple input', 200],
-  ['EL4002', '2-ch analog output 0…10 V, 12 bit', 175, true],
-  ['EL4004', '4-ch analog output 0…10 V, 12 bit', 210, true],
-  ['EL4012', '2-ch analog output 0…20 mA, 12 bit', 175, true],
-  ['EL5101', 'Incremental encoder interface, RS422', 130],
-  ['EL5151', 'Incremental encoder interface, 24 V', 130, true],
-  ['EL6001', 'Serial interface RS232', 160, true],
-  ['EL6751', 'CANopen master/slave', 350],
-  ['EL6900', 'TwinSAFE logic', 188, true],
-  ['EL7031', 'Stepper motor terminal, 1.5 A', 120, true],
-  ['EL7041', 'Stepper motor terminal, 5 A', 140, true],
-  ['EL7211', 'Servo motor terminal, 4.5 A', 120, true],
-  ['EK1122', 'EtherCAT junction, 2-port', 220],
-  ['EL9100', 'Potential feed terminal 24 V DC', 0],
-  ['EL9410', 'E-bus power supply terminal, refreshes 2,000 mA', 0],
-];
-const CAT = Object.fromEntries(CATALOG.map(([code, desc, mA, verify]) => [code, { code, desc, mA, verify: !!verify }]));
-const COUPLERS = [
-  ['EK1100', 'EtherCAT coupler', 2000],
-  ['EK1101', 'EtherCAT coupler with ID switch', 2000],
-  ['EK1501', 'EtherCAT coupler, fiber optic', 2000],
-  ['EK1814', 'Coupler with 4 DI / 4 DO', 1000],
-  ['EK1818', 'Coupler with 8 DI / 4 DO', 1000],
-  ['EK1828', 'Coupler with 4 DI / 8 DO', 1000],
-  ['CX', 'CX controller (E-bus)', 2000],
-  ['OTHER', 'Other / custom supply', 2000],
-];
-const EL9410_SUPPLY = 2000;
+// ================= catalog =================
+// code|description|typical bus draw mA|~ = estimate (shown as "verify")
+const RAW_DEVICES = `
+EL1002|2-ch digital input 24 V DC, 3 ms|90
+EL1004|4-ch digital input 24 V DC, 3 ms|90
+EL1008|8-ch digital input 24 V DC, 3 ms|90
+EL1012|2-ch digital input 24 V DC, 10 µs|90|~
+EL1014|4-ch digital input 24 V DC, 10 µs|90|~
+EL1018|8-ch digital input 24 V DC, 10 µs|90
+EL1024|4-ch digital input 24 V DC, type 2 sensors|90|~
+EL1034|4-ch digital input 24 V DC, potential-free contacts|90|~
+EL1052|2-ch digital input 24 V DC, 3 ms, sensor supply|90|~
+EL1054|4-ch digital input 24 V DC, 3 ms, sensor supply|90|~
+EL1084|4-ch digital input 24 V DC, ground switching|90|~
+EL1088|8-ch digital input 24 V DC, ground switching|90|~
+EL1094|4-ch digital input 24 V DC, ground switching, 10 µs|90|~
+EL1098|8-ch digital input 24 V DC, ground switching, 10 µs|90|~
+EL1104|4-ch digital input 24 V DC, 3 ms, sensor supply|90|~
+EL1114|4-ch digital input 24 V DC, 10 µs, sensor supply|90|~
+EL1124|4-ch digital input 5 V DC|90|~
+EL1134|4-ch digital input 48 V DC|90|~
+EL1144|4-ch digital input 12 V DC|90|~
+EL1202|2-ch digital input 24 V DC, 1 µs|100|~
+EL1252|2-ch digital input 24 V DC, timestamp|110|~
+EL1254|4-ch digital input 24 V DC, timestamp|110|~
+EL1258|8-ch digital input 24 V DC, multi-timestamp|110|~
+EL1262|2-ch digital input 24 V DC, oversampling|110|~
+EL1382|2-ch digital input, thermistor|90|~
+EL1502|2-ch up/down counter 24 V DC|100|~
+EL1512|2-ch counter 24 V DC, 1 kHz|100|~
+EL1702|2-ch digital input 120/230 V AC|90|~
+EL1712|2-ch digital input 120 V AC/DC|90|~
+EL1722|2-ch digital input 120/230 V AC, no power contacts|90|~
+EL1804|4-ch digital input 24 V DC, 3 ms, 3-wire|90|~
+EL1808|8-ch digital input 24 V DC, 3 ms, 2-wire|90|~
+EL1809|16-ch digital input 24 V DC, 3 ms|100
+EL1814|4-ch digital input 24 V DC, 10 µs, 3-wire|90|~
+EL1819|16-ch digital input 24 V DC, 10 µs|100
+EL1859|8-ch digital input + 8-ch digital output 24 V DC|130|~
+EL1862|16-ch digital input 24 V DC, flat-ribbon connector|130|~
+EL1872|16-ch digital input 24 V DC, flat-ribbon connector, 10 µs|130|~
+EL1889|16-ch digital input 24 V DC, ground switching|100|~
+EL1904|TwinSAFE 4-ch safe digital input 24 V DC|220|~
+EL1918|TwinSAFE logic with 8 safe inputs|220|~
+EL2002|2-ch digital output 24 V DC, 0.5 A|100
+EL2004|4-ch digital output 24 V DC, 0.5 A|100
+EL2008|8-ch digital output 24 V DC, 0.5 A|110
+EL2022|2-ch digital output 24 V DC, 2 A|100|~
+EL2024|4-ch digital output 24 V DC, 2 A|100|~
+EL2032|2-ch digital output 24 V DC, 2 A, diagnostics|100|~
+EL2034|4-ch digital output 24 V DC, 2 A, diagnostics|100|~
+EL2042|2-ch digital output 24 V DC, 4 A|100|~
+EL2084|4-ch digital output 24 V DC, ground switching|100|~
+EL2088|8-ch digital output 24 V DC, ground switching|110|~
+EL2124|4-ch digital output 5 V DC|100|~
+EL2202|2-ch digital output 24 V DC, push-pull, timestamp|100|~
+EL2252|2-ch digital output 24 V DC, timestamp|100|~
+EL2262|2-ch digital output 24 V DC, oversampling|130|~
+EL2502|2-ch PWM output 24 V DC|110|~
+EL2512|2-ch PWM output 24 V DC, ground switching|110|~
+EL2521|1-ch pulse train output|210|~
+EL2535|2-ch pulse width current output|110|~
+EL2612|2-ch relay output 125 V AC/30 V DC, changeover|100|~
+EL2622|2-ch relay output 230 V AC/30 V DC, make contact|100|~
+EL2624|4-ch relay output 125 V AC/30 V DC, make contact|100|~
+EL2634|4-ch relay output 250 V AC/30 V DC, make contact|100|~
+EL2652|2-ch relay output 230 V AC, changeover|100|~
+EL2702|2-ch solid-state output 230 V AC|100|~
+EL2712|2-ch triac output 12…230 V AC|100|~
+EL2722|2-ch triac output 12…230 V AC, no power contacts|100|~
+EL2732|2-ch triac output 12…230 V AC, potential-free|100|~
+EL2808|8-ch digital output 24 V DC, 0.5 A, 2-wire|110|~
+EL2809|16-ch digital output 24 V DC, 0.5 A|140
+EL2872|16-ch digital output 24 V DC, flat-ribbon connector|140|~
+EL2889|16-ch digital output 24 V DC, ground switching|140|~
+EL2904|TwinSAFE 4-ch safe digital output 24 V DC|180|~
+EL3001|1-ch analog input ±10 V, single-ended, 12 bit|130|~
+EL3002|2-ch analog input ±10 V, single-ended, 12 bit|130
+EL3004|4-ch analog input ±10 V, single-ended, 12 bit|130
+EL3008|8-ch analog input ±10 V, single-ended, 12 bit|130
+EL3011|1-ch analog input 0…20 mA, differential, 12 bit|130|~
+EL3012|2-ch analog input 0…20 mA, differential, 12 bit|130|~
+EL3014|4-ch analog input 0…20 mA, differential, 12 bit|130|~
+EL3021|1-ch analog input 4…20 mA, differential, 12 bit|130|~
+EL3022|2-ch analog input 4…20 mA, differential, 12 bit|130|~
+EL3024|4-ch analog input 4…20 mA, differential, 12 bit|130|~
+EL3041|1-ch analog input 0…20 mA, single-ended, 12 bit|130|~
+EL3042|2-ch analog input 0…20 mA, single-ended, 12 bit|130|~
+EL3044|4-ch analog input 0…20 mA, single-ended, 12 bit|130|~
+EL3048|8-ch analog input 0…20 mA, single-ended, 12 bit|130|~
+EL3051|1-ch analog input 4…20 mA, single-ended, 12 bit|130|~
+EL3052|2-ch analog input 4…20 mA, single-ended, 12 bit|130
+EL3054|4-ch analog input 4…20 mA, single-ended, 12 bit|130
+EL3058|8-ch analog input 4…20 mA, single-ended, 12 bit|130|~
+EL3061|1-ch analog input 0…10 V, single-ended, 12 bit|130|~
+EL3062|2-ch analog input 0…10 V, single-ended, 12 bit|130
+EL3064|4-ch analog input 0…10 V, single-ended, 12 bit|130
+EL3068|8-ch analog input 0…10 V, single-ended, 12 bit|130|~
+EL3101|1-ch analog input ±10 V, differential, 16 bit|130|~
+EL3102|2-ch analog input ±10 V, differential, 16 bit|130
+EL3104|4-ch analog input ±10 V, differential, 16 bit|130
+EL3111|1-ch analog input 0…20 mA, differential, 16 bit|130|~
+EL3112|2-ch analog input 0…20 mA, differential, 16 bit|130|~
+EL3114|4-ch analog input 0…20 mA, differential, 16 bit|130|~
+EL3121|1-ch analog input 4…20 mA, differential, 16 bit|130|~
+EL3122|2-ch analog input 4…20 mA, differential, 16 bit|130|~
+EL3124|4-ch analog input 4…20 mA, differential, 16 bit|130|~
+EL3141|1-ch analog input 0…20 mA, single-ended, 16 bit|130|~
+EL3142|2-ch analog input 0…20 mA, single-ended, 16 bit|130|~
+EL3144|4-ch analog input 0…20 mA, single-ended, 16 bit|130|~
+EL3151|1-ch analog input 4…20 mA, single-ended, 16 bit|130|~
+EL3152|2-ch analog input 4…20 mA, single-ended, 16 bit|130|~
+EL3154|4-ch analog input 4…20 mA, single-ended, 16 bit|130|~
+EL3161|1-ch analog input 0…10 V, single-ended, 16 bit|130|~
+EL3162|2-ch analog input 0…10 V, single-ended, 16 bit|130|~
+EL3164|4-ch analog input 0…10 V, single-ended, 16 bit|130|~
+EL3172|2-ch analog input 0…2 V, differential, 16 bit|130|~
+EL3174|4-ch analog input, multi-function ±10 V / ±20 mA, 16 bit|130|~
+EL3182|2-ch analog input 4…20 mA, HART|130|~
+EL3201|1-ch RTD input PT100|190|~
+EL3202|2-ch RTD input PT100|190
+EL3204|4-ch RTD input PT100|190
+EL3208|8-ch RTD input PT100/PT1000|190|~
+EL3214|4-ch RTD input PT100, 3-wire|190|~
+EL3255|5-ch potentiometer input with sensor supply|130|~
+EL3311|1-ch thermocouple input|200|~
+EL3312|2-ch thermocouple input|200|~
+EL3314|4-ch thermocouple input|200|~
+EL3318|8-ch thermocouple input|200|~
+EL3351|1-ch resistor bridge input (strain gauge)|210|~
+EL3356|1-ch precision load cell input|210|~
+EL3403|3-phase power measurement, 500 V AC|120|~
+EL3413|3-phase power measurement, 690 V AC|120|~
+EL3423|3-phase energy measurement, economy|120|~
+EL3443|3-phase power measurement, extended|120|~
+EL3602|2-ch analog input ±10 V, 24 bit|190|~
+EL3632|2-ch IEPE condition monitoring input|200|~
+EL3681|Digital multimeter terminal|190|~
+EL3692|2-ch resistance measurement|190|~
+EL3702|2-ch analog input ±10 V, oversampling|200|~
+EL3751|1-ch multi-function analog input, 24 bit|200|~
+EL3773|Power monitoring oversampling terminal|200|~
+EL4001|1-ch analog output 0…10 V, 12 bit|160|~
+EL4002|2-ch analog output 0…10 V, 12 bit|175|~
+EL4004|4-ch analog output 0…10 V, 12 bit|210|~
+EL4008|8-ch analog output 0…10 V, 12 bit|220|~
+EL4011|1-ch analog output 0…20 mA, 12 bit|160|~
+EL4012|2-ch analog output 0…20 mA, 12 bit|175|~
+EL4014|4-ch analog output 0…20 mA, 12 bit|210|~
+EL4018|8-ch analog output 0…20 mA, 12 bit|220|~
+EL4021|1-ch analog output 4…20 mA, 12 bit|160|~
+EL4022|2-ch analog output 4…20 mA, 12 bit|175|~
+EL4024|4-ch analog output 4…20 mA, 12 bit|210|~
+EL4028|8-ch analog output 4…20 mA, 12 bit|220|~
+EL4031|1-ch analog output ±10 V, 12 bit|160|~
+EL4032|2-ch analog output ±10 V, 12 bit|175|~
+EL4034|4-ch analog output ±10 V, 12 bit|210|~
+EL4038|8-ch analog output ±10 V, 12 bit|220|~
+EL4102|2-ch analog output 0…10 V, 16 bit|175|~
+EL4104|4-ch analog output 0…10 V, 16 bit|210|~
+EL4112|2-ch analog output 0…20 mA, 16 bit|175|~
+EL4122|2-ch analog output 4…20 mA, 16 bit|175|~
+EL4132|2-ch analog output ±10 V, 16 bit|175|~
+EL4134|4-ch analog output ±10 V, 16 bit|210|~
+EL4732|2-ch analog output ±10 V, oversampling|220|~
+EL5001|1-ch SSI encoder interface|120|~
+EL5002|2-ch SSI encoder interface|130|~
+EL5021|1-ch SinCos encoder interface|130|~
+EL5032|2-ch EnDat 2.2 encoder interface|130|~
+EL5042|2-ch BiSS-C encoder interface|130|~
+EL5101|Incremental encoder interface, RS422|130
+EL5131|Incremental encoder interface with digital outputs|130|~
+EL5151|Incremental encoder interface, 24 V HTL|130|~
+EL5152|2-ch incremental encoder interface, 24 V HTL|130|~
+EL6001|Serial interface RS232|160|~
+EL6002|2-ch serial interface RS232|160|~
+EL6021|Serial interface RS422/RS485|160|~
+EL6022|2-ch serial interface RS422/RS485|160|~
+EL6070|License key terminal|100|~
+EL6080|Memory terminal|100|~
+EL6201|AS-Interface master|230|~
+EL6224|IO-Link master, 4 ports|130|~
+EL6601|Ethernet switch port, 1 port|160|~
+EL6614|Ethernet switch port, 4 ports|380|~
+EL6631|PROFINET RT controller|400|~
+EL6632|PROFINET IRT controller|400|~
+EL6652|EtherNet/IP scanner|400|~
+EL6688|IEEE 1588 PTP external sync interface|400|~
+EL6692|EtherCAT bridge terminal|400|~
+EL6695|EtherCAT bridge terminal, extended|400|~
+EL6720|Lightbus master|250|~
+EL6731|PROFIBUS DP master|300|~
+EL6751|CANopen master/slave|350
+EL6752|DeviceNet master/slave|350|~
+EL6851|DMX master|300|~
+EL6900|TwinSAFE logic|188|~
+EL6910|TwinSAFE logic, extended|188|~
+EL6930|TwinSAFE logic, PROFIsafe gateway|188|~
+EL7031|Stepper motor terminal 24 V, 1.5 A|120|~
+EL7037|Stepper motor terminal 24 V, 1.5 A, vector control|120|~
+EL7041|Stepper motor terminal 48 V, 5 A|140|~
+EL7047|Stepper motor terminal 48 V, 5 A, vector control|140|~
+EL7062|2-ch stepper motor terminal 48 V, 3.5 A|120|~
+EL7201|Servo motor terminal 50 V, 2.8 A|120|~
+EL7211|Servo motor terminal 50 V, 4.5 A|120|~
+EL7221|Servo motor terminal 50 V, 8 A|120|~
+EL7332|2-ch DC motor output 24 V, 1 A|120|~
+EL7342|2-ch DC motor output 50 V, 3.5 A|120|~
+EL7411|BLDC motor terminal 50 V, 4.5 A|120|~
+ELM3002|2-ch precision analog input ±30 V, 24 bit|220|~
+ELM3004|4-ch precision analog input ±30 V, 24 bit|220|~
+ELM3102|2-ch precision analog input ±20 mA, 24 bit|220|~
+ELM3104|4-ch precision analog input ±20 mA, 24 bit|220|~
+ELM3602|2-ch IEPE precision input, 24 bit|250|~
+ELM3704|4-ch universal precision input, 24 bit|250|~
+ELX1052|2-ch digital input NAMUR, Ex i|120|~
+ELX2002|2-ch digital output 24 V, Ex i|140|~
+ELX3152|2-ch analog input 4…20 mA, Ex i|160|~
+ELX3202|2-ch RTD input, Ex i|160|~
+ELX4181|1-ch analog output 0/4…20 mA, Ex i|160|~
+ELX9560|Power supply terminal for Ex i terminals|110|~
+EL9011|End cap for EtherCAT terminals|0
+EL9070|Shield terminal|0|~
+EL9080|Separation terminal|0|~
+EL9100|Potential feed terminal 24 V DC|0
+EL9110|Potential feed terminal 24 V DC, diagnostics|90|~
+EL9150|Potential feed terminal 230 V AC|0|~
+EL9160|Potential feed terminal 230 V AC, diagnostics|90|~
+EL9180|Potential distribution terminal|0|~
+EL9184|Potential distribution, 8 × 24 V / 8 × 0 V|0|~
+EL9185|Potential distribution, 4 × 24 V / 4 × 0 V|0|~
+EL9186|Potential distribution, 8 × 24 V|0|~
+EL9187|Potential distribution, 8 × 0 V|0|~
+EL9188|Potential distribution, 16 × 24 V|0|~
+EL9189|Potential distribution, 16 × 0 V|0|~
+EL9190|Potential feed terminal, any voltage up to 230 V|0|~
+EL9195|Shield terminal with feed|0|~
+EL9200|Potential feed terminal 24 V DC with fuse|0|~
+EL9210|Potential feed 24 V DC with fuse and diagnostics|90|~
+EL9227|2-ch electronic overcurrent protection 24 V DC|100|~
+EL9410|E-bus power supply terminal, refreshes 2,000 mA|0
+EL9505|Power supply terminal 5 V DC|110|~
+EL9508|Power supply terminal 8 V DC|110|~
+EL9510|Power supply terminal 10 V DC|110|~
+EL9512|Power supply terminal 12 V DC|110|~
+EL9515|Power supply terminal 15 V DC|110|~
+EL9560|Power supply terminal 24 V DC, isolated|110|~
+EL9576|Brake chopper terminal|100|~
+EK1110|EtherCAT extension, ends the E-bus, RJ45 out|130|~
+EK1122|EtherCAT junction, 2 ports RJ45|220
+EK1122-0080|EtherCAT junction, 2 ports, Fast Hot Connect|220|~
+EK1521|EtherCAT junction, 1 port multimode fiber|330|~
+EK1541|EtherCAT junction, 1 port POF|330|~
+BK1250|Compact coupler E-bus to K-bus, starts a KL section|280|~
+KL1002|2-ch digital input 24 V DC, 3 ms|3|~
+KL1012|2-ch digital input 24 V DC, 0.2 ms|3|~
+KL1104|4-ch digital input 24 V DC, 3 ms|5|~
+KL1114|4-ch digital input 24 V DC, 0.2 ms|5|~
+KL1124|4-ch digital input 5 V DC|5|~
+KL1184|4-ch digital input 24 V DC, ground switching|5|~
+KL1212|2-ch digital input 24 V DC, diagnostics|5|~
+KL1232|2-ch digital input 24 V DC, pulse extension|3|~
+KL1302|2-ch digital input 24 V DC, type 2|3|~
+KL1304|4-ch digital input 24 V DC, type 2|5|~
+KL1312|2-ch digital input 24 V DC, type 2, 0.2 ms|3|~
+KL1314|4-ch digital input 24 V DC, type 2, 0.2 ms|5|~
+KL1362|2-ch break-in alarm input|5|~
+KL1382|2-ch thermistor input|5|~
+KL1404|4-ch digital input 24 V DC, 2-wire|5|~
+KL1408|8-ch digital input 24 V DC, 3 ms|5|~
+KL1414|4-ch digital input 24 V DC, 0.2 ms, 2-wire|5|~
+KL1418|8-ch digital input 24 V DC, 0.2 ms|5|~
+KL1488|8-ch digital input 24 V DC, ground switching|5|~
+KL1498|8-ch digital input 24 V DC, ground switching, 0.2 ms|5|~
+KL1501|Up/down counter 24 V DC, 100 kHz|50|~
+KL1512|2-ch counter 24 V DC, 1 kHz|50|~
+KL1702|2-ch digital input 120/230 V AC|3|~
+KL1712|2-ch digital input 120 V AC/DC|3|~
+KL1722|2-ch digital input 120/230 V AC, no power contacts|3|~
+KL1808|8-ch digital input 24 V DC, 3 ms, HD|10|~
+KL1809|16-ch digital input 24 V DC, 3 ms, HD|20|~
+KL1819|16-ch digital input 24 V DC, 0.2 ms, HD|20|~
+KL1859|8-ch digital input + 8-ch digital output 24 V DC, HD|30|~
+KL1862|16-ch digital input 24 V DC, flat-ribbon connector|20|~
+KL1889|16-ch digital input 24 V DC, ground switching, HD|20|~
+KL1904|TwinSAFE 4-ch safe digital input|200|~
+KL2012|2-ch digital output 24 V DC, 0.5 A|7|~
+KL2022|2-ch digital output 24 V DC, 2 A|7|~
+KL2032|2-ch digital output 24 V DC, 0.5 A, diagnostics|7|~
+KL2114|4-ch digital output 24 V DC, 0.5 A|9|~
+KL2124|4-ch digital output 5 V DC|9|~
+KL2184|4-ch digital output 24 V DC, ground switching|9|~
+KL2404|4-ch digital output 24 V DC, 0.5 A|9|~
+KL2408|8-ch digital output 24 V DC, 0.5 A|18|~
+KL2424|4-ch digital output 24 V DC, 2 A|12|~
+KL2442|2-ch digital output 24 V DC, 4 A|9|~
+KL2488|8-ch digital output 24 V DC, ground switching|18|~
+KL2502|2-ch PWM output 24 V DC|40|~
+KL2512|2-ch PWM output 24 V DC, ground switching|40|~
+KL2521|1-ch pulse train output|50|~
+KL2531|Stepper motor terminal 24 V, 1.5 A|50|~
+KL2535|2-ch pulse width current output|40|~
+KL2541|Stepper motor terminal 48 V, 5 A|100|~
+KL2602|2-ch relay output 230 V AC, make contact|40|~
+KL2612|2-ch relay output 125 V AC, changeover|40|~
+KL2622|2-ch relay output 230 V AC, make contact, no power contacts|40|~
+KL2641|1-ch relay output 230 V AC, 16 A|40|~
+KL2652|2-ch relay output 230 V AC, changeover|40|~
+KL2701|1-ch solid-state load relay 230 V AC|20|~
+KL2702|2-ch solid-state output 230 V AC|20|~
+KL2712|2-ch triac output 12…230 V AC|20|~
+KL2722|2-ch triac output, no power contacts|20|~
+KL2732|2-ch triac output, potential-free|20|~
+KL2744|4-ch solid-state relay output|20|~
+KL2751|1-ch universal dimmer 230 V AC|50|~
+KL2791|1-ch AC motor speed controller|50|~
+KL2808|8-ch digital output 24 V DC, 0.5 A, HD|20|~
+KL2809|16-ch digital output 24 V DC, 0.5 A, HD|30|~
+KL2872|16-ch digital output 24 V DC, flat-ribbon connector|30|~
+KL2889|16-ch digital output 24 V DC, ground switching, HD|30|~
+KL2904|TwinSAFE 4-ch safe digital output|200|~
+KL3001|1-ch analog input ±10 V, differential|60|~
+KL3002|2-ch analog input ±10 V, differential|60|~
+KL3011|1-ch analog input 0…20 mA|60|~
+KL3012|2-ch analog input 0…20 mA|60|~
+KL3021|1-ch analog input 4…20 mA|60|~
+KL3022|2-ch analog input 4…20 mA|60|~
+KL3041|1-ch analog input 0…20 mA, single-ended|60|~
+KL3042|2-ch analog input 0…20 mA, single-ended|60|~
+KL3044|4-ch analog input 0…20 mA, single-ended|85|~
+KL3051|1-ch analog input 4…20 mA, single-ended|60|~
+KL3052|2-ch analog input 4…20 mA, single-ended|60|~
+KL3054|4-ch analog input 4…20 mA, single-ended|85|~
+KL3061|1-ch analog input 0…10 V, single-ended|60|~
+KL3062|2-ch analog input 0…10 V, single-ended|60|~
+KL3064|4-ch analog input 0…10 V, single-ended|85|~
+KL3102|2-ch analog input ±10 V, differential, 16 bit|60|~
+KL3112|2-ch analog input 0…20 mA, 16 bit|60|~
+KL3122|2-ch analog input 4…20 mA, 16 bit|60|~
+KL3132|2-ch analog input ±10 V, 16 bit|60|~
+KL3142|2-ch analog input 0…20 mA, single-ended, 16 bit|60|~
+KL3152|2-ch analog input 4…20 mA, single-ended, 16 bit|60|~
+KL3162|2-ch analog input 0…10 V, single-ended, 16 bit|60|~
+KL3172|2-ch analog input 0…2 V, 16 bit|60|~
+KL3182|2-ch analog input ±2 V, 16 bit|60|~
+KL3201|1-ch RTD input PT100|60|~
+KL3202|2-ch RTD input PT100|60|~
+KL3204|4-ch RTD input PT100|60|~
+KL3208|8-ch RTD input PT1000|60|~
+KL3222|2-ch precision RTD input|60|~
+KL3228|8-ch RTD input|60|~
+KL3302|2-ch thermocouple input|60|~
+KL3311|1-ch thermocouple input|60|~
+KL3312|2-ch thermocouple input|60|~
+KL3314|4-ch thermocouple input|60|~
+KL3351|1-ch resistor bridge input (strain gauge)|85|~
+KL3356|1-ch precision resistor bridge input|85|~
+KL3361|1-ch oscilloscope terminal|85|~
+KL3362|2-ch oscilloscope terminal|85|~
+KL3403|3-phase power measurement|85|~
+KL3404|4-ch analog input ±10 V|60|~
+KL3408|8-ch analog input ±10 V|60|~
+KL3444|4-ch analog input 0…20 mA|60|~
+KL3448|8-ch analog input 0…20 mA|60|~
+KL3454|4-ch analog input 4…20 mA|60|~
+KL3458|8-ch analog input 4…20 mA|60|~
+KL3464|4-ch analog input 0…10 V|60|~
+KL3468|8-ch analog input 0…10 V|60|~
+KL3681|Digital multimeter terminal|85|~
+KL4001|1-ch analog output 0…10 V|85|~
+KL4002|2-ch analog output 0…10 V|85|~
+KL4004|4-ch analog output 0…10 V|85|~
+KL4011|1-ch analog output 0…20 mA|85|~
+KL4012|2-ch analog output 0…20 mA|85|~
+KL4021|1-ch analog output 4…20 mA|85|~
+KL4022|2-ch analog output 4…20 mA|85|~
+KL4031|1-ch analog output ±10 V|85|~
+KL4032|2-ch analog output ±10 V|85|~
+KL4034|4-ch analog output ±10 V|85|~
+KL4112|2-ch analog output 0…20 mA, 16 bit|85|~
+KL4132|2-ch analog output ±10 V, 16 bit|85|~
+KL4404|4-ch analog output 0…10 V|85|~
+KL4408|8-ch analog output 0…10 V|85|~
+KL4414|4-ch analog output 0…20 mA|85|~
+KL4418|8-ch analog output 0…20 mA|85|~
+KL4424|4-ch analog output 4…20 mA|85|~
+KL4428|8-ch analog output 4…20 mA|85|~
+KL4434|4-ch analog output ±10 V|85|~
+KL4438|8-ch analog output ±10 V|85|~
+KL4494|2-ch analog input + 2-ch analog output ±10 V|85|~
+KL5001|SSI encoder interface|50|~
+KL5051|Bidirectional SSI interface|50|~
+KL5101|Incremental encoder interface, RS422|60|~
+KL5111|Incremental encoder interface, 24 V|60|~
+KL5121|Linear path control interface|60|~
+KL5151|Incremental encoder interface, 24 V|60|~
+KL5152|2-ch incremental encoder interface, 24 V|60|~
+KL6001|Serial interface RS232|65|~
+KL6011|Serial interface TTY|65|~
+KL6021|Serial interface RS422/RS485|65|~
+KL6031|Serial interface RS232, high speed|65|~
+KL6041|Serial interface RS422/RS485, high speed|65|~
+KL6201|AS-Interface master|100|~
+KL6224|IO-Link terminal|75|~
+KL6301|EIB/KNX bus terminal|55|~
+KL6401|LON bus terminal|55|~
+KL6581|EnOcean master terminal|55|~
+KL6751|CANopen master/slave terminal|85|~
+KL6771|MP-Bus master terminal|55|~
+KL6781|M-Bus master terminal|55|~
+KL6811|DALI/DSI master terminal|55|~
+KL6821|DALI-2 master terminal|55|~
+KL6851|DMX master terminal|55|~
+KL6904|TwinSAFE logic terminal|200|~
+KL9010|K-bus end terminal|0|~
+KL9020|K-bus extension end terminal|0|~
+KL9050|K-bus extension coupler|0|~
+KL9100|Potential feed terminal 24 V DC|0|~
+KL9110|Potential feed terminal 24 V DC, diagnostics|0|~
+KL9150|Potential feed terminal 230 V AC|0|~
+KL9160|Potential feed terminal 230 V AC, diagnostics|0|~
+KL9180|Potential distribution terminal|0|~
+KL9184|Potential distribution, 8 × 24 V / 8 × 0 V|0|~
+KL9185|Potential distribution, 4 × 24 V / 4 × 0 V|0|~
+KL9186|Potential distribution, 8 × 24 V|0|~
+KL9187|Potential distribution, 8 × 0 V|0|~
+KL9188|Potential distribution, 16 × 24 V|0|~
+KL9189|Potential distribution, 16 × 0 V|0|~
+KL9190|Potential feed terminal, any voltage|0|~
+KL9195|Shield terminal|0|~
+KL9200|Potential feed 24 V DC with fuse|0|~
+KL9210|Potential feed 24 V DC with fuse and diagnostics|0|~
+KL9260|Potential feed 230 V AC with fuse and diagnostics|0|~
+KL9400|K-bus power supply terminal, refreshes 2,000 mA|0|~
+KL9505|Power supply terminal 5 V DC|20|~
+KL9508|Power supply terminal 8 V DC|20|~
+KL9510|Power supply terminal 10 V DC|20|~
+KL9512|Power supply terminal 12 V DC|20|~
+KL9515|Power supply terminal 15 V DC|20|~
+KL9540|Surge filter, field supply|0|~
+KL9550|Surge filter, system and field supply|0|~
+KL9560|Power supply terminal 24 V DC, isolated|20|~
+KL9570|Buffer capacitor terminal|0|~
+EP1008-0001|EtherCAT Box, 8 digital inputs 24 V, M8|0
+EP1008-0002|EtherCAT Box, 8 digital inputs 24 V, M12|0
+EP1018-0001|EtherCAT Box, 8 digital inputs 24 V, 10 µs, M8|0
+EP1258-0001|EtherCAT Box, 8 digital inputs, timestamp, M8|0
+EP1809-0021|EtherCAT Box, 16 digital inputs 24 V, M12|0
+EP2008-0001|EtherCAT Box, 8 digital outputs 24 V, M8|0
+EP2008-0002|EtherCAT Box, 8 digital outputs 24 V, M12|0
+EP2028-0001|EtherCAT Box, 8 digital outputs 24 V, 2 A, M8|0
+EP2338-0001|EtherCAT Box, 8 digital inputs/outputs 24 V, M8|0
+EP2339-0021|EtherCAT Box, 16 digital inputs/outputs 24 V, M12|0
+EP2624-0002|EtherCAT Box, 4 relay outputs, M12|0
+EP2809-0021|EtherCAT Box, 16 digital outputs 24 V, M12|0
+EP3174-0002|EtherCAT Box, 4 analog inputs ±10 V / 0…20 mA, M12|0
+EP3182-1002|EtherCAT Box, 2 analog inputs 4…20 mA, HART|0
+EP3204-0002|EtherCAT Box, 4 RTD inputs, M12|0
+EP3314-0002|EtherCAT Box, 4 thermocouple inputs, M12|0
+EP3356-0022|EtherCAT Box, load cell input|0
+EP4174-0002|EtherCAT Box, 4 analog outputs ±10 V / 0…20 mA, M12|0
+EP4374-0002|EtherCAT Box, 2 analog inputs + 2 analog outputs, M12|0
+EP5001-0002|EtherCAT Box, SSI encoder interface|0
+EP5101-0002|EtherCAT Box, incremental encoder interface|0
+EP5151-0002|EtherCAT Box, incremental encoder interface, 24 V|0
+EP6002-0002|EtherCAT Box, 2 serial interfaces RS232/RS485|0
+EP6224-0002|EtherCAT Box, IO-Link master, 4 ports|0
+EP7041-0002|EtherCAT Box, stepper motor 48 V, 5 A|0
+EP7047-1032|EtherCAT Box, stepper motor with vector control|0
+EP9128-0021|EtherCAT Box, 8-port junction, M8|0
+EP9214-0023|EtherCAT Box, power distribution|0
+EP9224-0037|EtherCAT Box, power distribution with diagnostics|0
+EPP1008-0001|EtherCAT P Box, 8 digital inputs 24 V, M8|0
+EPP2008-0001|EtherCAT P Box, 8 digital outputs 24 V, M8|0
+EPP2338-0001|EtherCAT P Box, 8 digital inputs/outputs 24 V, M8|0
+EPP3174-0002|EtherCAT P Box, 4 analog inputs, M12|0
+EPP4174-0002|EtherCAT P Box, 4 analog outputs, M12|0
+EPP6228-0022|EtherCAT P Box, IO-Link master, 8 ports|0
+`;
+// code|description|supply mA|bus|~
+const RAW_COUPLERS = `
+EK1100|EtherCAT coupler|2000|E
+EK1101|EtherCAT coupler with ID switch|2000|E
+EK1101-0080|EtherCAT coupler, ID switch, Fast Hot Connect|2000|E|~
+EK1501|EtherCAT coupler with ID switch, multimode fiber|2000|E|~
+EK1501-0010|EtherCAT coupler with ID switch, single-mode fiber|2000|E|~
+EK1814|EtherCAT coupler with 4 DI / 4 DO|1000|E|~
+EK1818|EtherCAT coupler with 8 DI / 4 DO|1000|E|~
+EK1828|EtherCAT coupler with 4 DI / 8 DO|1000|E|~
+EK1828-0010|EtherCAT coupler with 8 DO|1000|E|~
+EK3100|PROFIBUS bus coupler for EtherCAT terminals|2000|E|~
+EK9000|Modbus TCP / ADS bus coupler for EtherCAT terminals|2000|E|~
+EK9160|IoT bus coupler for EtherCAT terminals|2000|E|~
+EK9300|PROFINET RT bus coupler for EtherCAT terminals|2000|E|~
+EK9500|EtherNet/IP bus coupler for EtherCAT terminals|2000|E|~
+CX-EBUS|CX embedded PC, E-bus power supply|2000|E|~
+BK1120|EtherCAT coupler for Bus Terminals (K-bus)|1750|K|~
+BK1150|EtherCAT compact coupler for Bus Terminals (K-bus)|1000|K|~
+BK3120|PROFIBUS DP coupler for Bus Terminals (K-bus)|1750|K|~
+BK5120|CANopen coupler for Bus Terminals (K-bus)|1750|K|~
+BK9000|Ethernet TCP/IP coupler for Bus Terminals (K-bus)|1750|K|~
+BK9050|Ethernet compact coupler for Bus Terminals (K-bus)|1000|K|~
+CUSTOM|Other coupler, custom supply|2000|E
+`;
+const REFRESH = { EL9410: 'E', KL9400: 'K' };
+const REFRESH_MA = 2000;
+const K_START = { BK1250: 1000 }; // K-bus supply a BK1250 gives (estimate)
+const FUNC_NAME = { 1: 'Digital input', 2: 'Digital output', 3: 'Analog input', 4: 'Analog output', 5: 'Position', 6: 'Communication', 7: 'Motion', 9: 'System & power' };
 
-// ---------- state ----------
-let uidN = 1;
-const uid = () => 'u' + (uidN++) + Math.random().toString(36).slice(2, 6);
-function item(code, mA) {
-  const c = CAT[code];
-  return { uid: uid(), code, mA: mA ?? (c ? c.mA : 0), desc: c ? c.desc : 'Custom terminal' };
+function busOf(code) {
+  if (/^EPP?\d/.test(code)) return 'box';
+  if (/^K[LSM]\d/.test(code)) return 'K';
+  return 'E';
 }
-function many(code, n) { return Array.from({ length: n }, () => item(code)); }
+function funcOf(code) {
+  if (/^(EK|BK)/.test(code)) return 9;
+  const m = /^[A-Z]+(\d)/.exec(code);
+  return m ? +m[1] : 9;
+}
+const CATALOG = [];
+RAW_DEVICES.trim().split('\n').forEach(line => {
+  const [code, desc, mA, flag] = line.split('|');
+  CATALOG.push({ code, desc, mA: +mA, est: flag === '~', bus: busOf(code), func: funcOf(code) });
+});
+// ES terminals share the EL electronics; add them for EL1xxx–EL4xxx.
+CATALOG.filter(d => /^EL[1-4]\d{3}$/.test(d.code) && !/TwinSAFE/.test(d.desc)).forEach(d => {
+  CATALOG.push({ ...d, code: 'ES' + d.code.slice(2), desc: d.desc + ' (ES, pluggable wiring)' });
+});
+CATALOG.sort((a, b) => a.code.localeCompare(b.code));
+const CAT = Object.fromEntries(CATALOG.map(d => [d.code, d]));
+const COUPLERS = RAW_COUPLERS.trim().split('\n').map(line => {
+  const [code, desc, supply, bus, flag] = line.split('|');
+  return { code, desc, supply: +supply, bus, est: flag === '~' };
+});
+const CPL = Object.fromEntries(COUPLERS.map(c => [c.code, c]));
+
+// ================= state =================
+const uid = () => 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+function info(code) { return CAT[code] || (state && state.custom && state.custom[code]) || null; }
+function makeItem(code, mA) {
+  const c = info(code);
+  return { uid: uid(), code, mA: mA ?? (c ? c.mA : 0), desc: c ? c.desc : 'Custom device', bus: c ? c.bus : busOf(code) };
+}
+const many = (code, n) => Array.from({ length: n }, () => makeItem(code));
 function exampleState() {
   return {
     reserve: 10,
+    custom: {},
+    recent: ['EL3054', 'EP2338-0001', 'KL1408', 'EL6751', 'EL5101', 'EL3064', 'EL3204', 'EL1008'],
     segments: [
-      { id: uid(), name: 'Main panel', coupler: 'EK1100', supply: 2000, items: [
-        ...many('EL1008', 4), ...many('EL2008', 4), ...many('EL3204', 3), ...many('EL3064', 2), item('EL5101'), item('EL6751'), item('EL9100'), ...many('EL3054', 2),
+      { id: uid(), name: 'Main panel', coupler: 'EK1100', supply: 2000, editing: false, pick: '', items: [
+        ...many('EL1008', 4), ...many('EL2008', 4), ...many('EL3204', 3), ...many('EL3064', 2), makeItem('EL5101'), makeItem('EL6751'), makeItem('EL9100'), ...many('EL3054', 2),
       ] },
-      { id: uid(), name: 'Conveyor box', coupler: 'EK1818', supply: 1000, items: [
-        ...many('EL1008', 2), item('EL2008'), item('EL7041'),
+      { id: uid(), name: 'Conveyor box', coupler: 'EK1818', supply: 1000, editing: false, pick: '', items: [
+        ...many('EL1008', 2), makeItem('EL2008'), makeItem('EL7041'), makeItem('EK1110'), makeItem('EP2338-0001'), makeItem('EP3174-0002'),
+      ] },
+      { id: uid(), name: 'Retrofit cabinet', coupler: 'EK1100', supply: 2000, editing: false, pick: '', items: [
+        makeItem('EL1809'), makeItem('EL2809'), makeItem('BK1250'), ...many('KL1408', 2), makeItem('KL2408'), makeItem('KL3064'), makeItem('KL4004'),
       ] },
     ],
   };
 }
-const STORE_KEY = 'ebus-planner-v1';
-let state;
+const STORE_KEY = 'ebus-planner-v2';
+let state = null;
 try { const raw = localStorage.getItem(STORE_KEY); state = raw ? JSON.parse(raw) : null; } catch (e) { state = null; }
 if (!state || !Array.isArray(state.segments)) state = exampleState();
+state.custom = state.custom || {};
+state.recent = Array.isArray(state.recent) ? state.recent : [];
 function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} }
-let selected = null; // item uid
-const drafts = {}; // per segment add-row values
+let selected = null; // item uid, or 'cpl:<segId>'
+let pendingDelete = null;
 
-// ---------- analysis ----------
-const isSupply = it => it.code === 'EL9410';
-function analyze(seg, reservePct) {
-  const r = reservePct / 100;
-  let source = seg.supply, budget = seg.supply;
-  let draw = 0, supplyTotal = seg.supply, minLeft = seg.supply, worst = 'ok';
-  const rows = seg.items.map(it => {
-    if (isSupply(it)) {
-      source = EL9410_SUPPLY; budget = EL9410_SUPPLY; supplyTotal += EL9410_SUPPLY;
-      return { it, left: budget, source, status: 'ok', feed: true };
-    }
-    budget -= it.mA; draw += it.mA;
-    const status = budget < 0 ? 'over' : budget < source * r ? 'low' : 'ok';
-    if (status === 'over') worst = 'over'; else if (status === 'low' && worst !== 'over') worst = 'low';
-    minLeft = Math.min(minLeft, budget);
-    return { it, left: budget, source, status, feed: false };
-  });
-  // Suggested EL9410 positions: simulate on the current order, existing EL9410s respected.
-  const sugg = []; // {before: index}
-  let impossible = [];
-  source = seg.supply; budget = seg.supply;
-  let sinceFeed = 0; // non-supply terminals since last source
-  seg.items.forEach((it, i) => {
-    if (isSupply(it)) { source = budget = EL9410_SUPPLY; sinceFeed = 0; return; }
-    const floor = source * r;
-    if (budget - it.mA < floor && sinceFeed > 0) {
-      sugg.push({ before: i });
-      source = budget = EL9410_SUPPLY; sinceFeed = 0;
-    }
-    budget -= it.mA; sinceFeed++;
-    if (budget < source * r && sinceFeed === 1) impossible.push(i);
-  });
-  return { rows, draw, supplyTotal, minLeft, worst, sugg, impossible, feeds: seg.items.filter(isSupply).length };
+function pushRecent(code) {
+  state.recent = [code, ...state.recent.filter(c => c !== code)].slice(0, 8);
 }
 
-// ---------- rendering ----------
+// ================= analysis =================
+function analyze(seg, reservePct) {
+  const r = reservePct / 100;
+  if (!seg.coupler) return { empty: true, rows: [], issues: [], sugg: [], impossible: [], worst: 'none', E: null, K: null };
+  const cbus = (CPL[seg.coupler] || CPL.CUSTOM).bus;
+  const mk = sup => ({ src: sup, left: sup, draw: 0, supply: sup, min: sup });
+  let E = cbus === 'E' ? mk(seg.supply) : null;
+  let K = cbus === 'K' ? mk(seg.supply) : null;
+  const issues = [], rows = [];
+  let seenBox = false, seenExt = false, kOnERail = false;
+  seg.items.forEach((it, i) => {
+    const row = { it, i, bus: it.bus, left: null, src: null, status: 'ok', feed: false, note: '' };
+    const flag = msg => { row.status = 'bad'; issues.push({ i, msg }); };
+    if (it.bus === 'box') { seenBox = true; row.note = 'Off-rail, no bus draw'; rows.push(row); return; }
+    if (seenBox) flag(`#${i + 1} ${it.code} sits after an EP box. Boxes hang off the EtherCAT cable, so move rail devices in front of them.`);
+    else if (seenExt) flag(`#${i + 1} ${it.code} sits after the EK1110. The EK1110 has to be the last device on the rail.`);
+    let B;
+    if (it.bus === 'K') {
+      if (!K) { flag(`#${i + 1} ${it.code} is a K-bus terminal. Put a BK1250 in front of it, or use a K-bus coupler such as the BK1120.`); rows.push(row); return; }
+      if (cbus === 'E') kOnERail = true;
+      B = K;
+    } else {
+      if (!E) { flag(`#${i + 1} ${it.code} is an E-bus device and can't run on a K-bus coupler.`); rows.push(row); return; }
+      if (kOnERail) flag(`#${i + 1} ${it.code} follows K-bus terminals. After a BK1250 the rest of the rail is K-bus.`);
+      B = E;
+    }
+    if (REFRESH[it.code] === it.bus) {
+      B.src = B.left = REFRESH_MA; B.supply += REFRESH_MA; row.feed = true;
+    } else {
+      B.left -= it.mA; B.draw += it.mA; B.min = Math.min(B.min, B.left);
+      if (row.status !== 'bad') row.status = B.left < 0 ? 'over' : B.left < B.src * r ? 'low' : 'ok';
+    }
+    row.left = B.left; row.src = B.src;
+    if (K_START[it.code] && it.bus === 'E') { K = mk(K_START[it.code]); row.note = `Starts K-bus, ${K_START[it.code]} mA`; }
+    if (it.code === 'EK1110') seenExt = true;
+    rows.push(row);
+  });
+  // Suggested refresh terminals (EL9410 on E-bus, KL9400 on K-bus)
+  const sugg = [], impossible = [];
+  const sim = { E: cbus === 'E' ? { src: seg.supply, left: seg.supply, since: 0 } : null, K: cbus === 'K' ? { src: seg.supply, left: seg.supply, since: 0 } : null };
+  rows.forEach(row => {
+    const it = row.it, S = sim[it.bus];
+    if (it.bus === 'box' || !S || row.status === 'bad') return;
+    if (REFRESH[it.code] === it.bus) { S.src = S.left = REFRESH_MA; S.since = 0; }
+    else {
+      if (S.left - it.mA < S.src * r && S.since > 0) {
+        sugg.push({ before: row.i, code: it.bus === 'E' ? 'EL9410' : 'KL9400' });
+        S.src = S.left = REFRESH_MA; S.since = 0;
+      }
+      S.left -= it.mA; S.since++;
+      if (S.left < S.src * r && S.since === 1) impossible.push(row.i);
+    }
+    if (K_START[it.code] && it.bus === 'E') sim.K = { src: K_START[it.code], left: K_START[it.code], since: 0 };
+  });
+  const sts = rows.map(x => x.status);
+  const worst = sts.includes('over') ? 'over' : issues.length ? 'bad' : sts.includes('low') ? 'low' : 'ok';
+  return { rows, issues, sugg, impossible, worst, E, K, cbus };
+}
+
+// ================= rendering =================
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const fmt = n => Math.round(n).toLocaleString('en-US');
-const famVar = code => {
-  const m = /^E[LK](\d)/.exec(code);
-  if (!m) return 'var(--fam-9)';
-  const d = m[1];
-  return ['1','2','3','4','5','6','7'].includes(d) ? `var(--fam-${d})` : 'var(--fam-9)';
-};
-const STATUS_TEXT = { ok: 'Within supply', low: 'Below reserve', over: 'Over supply' };
+const famVar = code => { const f = funcOf(code); return f >= 1 && f <= 7 ? `var(--fam-${f})` : 'var(--fam-9)'; };
+const STATUS_TEXT = { ok: 'Within supply', low: 'Below reserve', over: 'Over supply', bad: 'Layout problem', none: 'No coupler yet' };
+const BUS_TEXT = { E: 'E-bus', K: 'K-bus', box: 'Cable' };
+const LIST_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3.5h12M2 8h12M2 12.5h12" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>';
 
-function renderRail(seg, a) {
-  const suggAt = new Set(a.sugg.map(s => s.before));
-  const coupler = COUPLERS.find(c => c[0] === seg.coupler);
-  const cLabel = seg.coupler === 'OTHER' ? 'SUPPLY' : seg.coupler;
-  let html = `<div class="slice coupler" title="${esc(cLabel)}: ${fmt(seg.supply)} mA supply"><div class="body"><div class="stripe" style="--fam:var(--accent)"></div><div class="code">${esc(cLabel)}</div></div><div class="ma">${fmt(seg.supply)}</div><div class="meter"><i style="height:100%"></i></div></div>`;
-  a.rows.forEach((row, i) => {
-    if (suggAt.has(i)) {
-      html += `<div class="slice ghost" title="Suggested EL9410"><div class="body"><div class="stripe" style="--fam:transparent"></div><div class="code">EL9410</div></div><div class="ma">+2k</div><div class="meter"><i style="height:0"></i></div></div>`;
+function sliceHTML(row, segIdx) {
+  const it = row.it;
+  const sel = selected === it.uid ? ' sel' : '';
+  if (it.bus === 'box') {
+    return `<div class="slice box${sel}" role="button" tabindex="0" data-drag="1" data-seg="${segIdx}" data-uid="${it.uid}" data-idx="${row.i}" title="${esc(it.code)}: EtherCAT Box, off-rail" aria-label="${esc(it.code)}, position ${row.i + 1}, EtherCAT Box"><div class="body"><div class="stripe" style="--fam:${famVar(it.code)}"></div><div class="code">${esc(it.code.replace(/-\d+$/, ''))}</div></div><div class="ma">box</div></div>`;
+  }
+  const pct = row.src ? Math.max(0, Math.min(100, row.left / row.src * 100)) : 0;
+  const cls = ['slice', row.status, row.feed ? 'feed' : '', it.bus === 'K' ? 'kbus' : '', sel].join(' ');
+  const tip = row.feed ? `${it.code}: +${fmt(REFRESH_MA)} mA` : row.left == null ? `${it.code}: not powered here` : `${it.code}: ${fmt(it.mA)} mA, ${fmt(row.left)} mA left on ${BUS_TEXT[it.bus]}`;
+  return `<div class="${cls}" role="button" tabindex="0" data-drag="1" data-seg="${segIdx}" data-uid="${it.uid}" data-idx="${row.i}" title="${esc(tip)}" aria-label="${esc(tip)}, position ${row.i + 1}"><div class="body"><div class="stripe" style="--fam:${row.feed ? 'var(--accent)' : famVar(it.code)}"></div><div class="code">${esc(it.code)}</div></div><div class="ma">${row.feed ? '+2k' : fmt(it.mA)}</div><div class="meter"><i style="height:${pct}%"></i></div></div>`;
+}
+
+function renderRail(seg, a, idx) {
+  if (!seg.coupler) {
+    return `<div class="rail-wrap"><div class="rail"><div class="empty-slot">Select a bus coupler above to start this fieldbus.</div></div></div>`;
+  }
+  const suggAt = new Map(a.sugg.map(s => [s.before, s.code]));
+  const cLabel = seg.coupler === 'CUSTOM' ? 'COUPLER' : seg.coupler.replace('-EBUS', '');
+  const csel = selected === 'cpl:' + seg.id ? ' sel' : '';
+  let html = `<div class="slice coupler${csel}" role="button" tabindex="0" data-cpl="${idx}" title="${esc(cLabel)}: ${fmt(seg.supply)} mA supply. Select it, then press Change to swap the coupler." aria-label="Coupler ${esc(cLabel)}, ${fmt(seg.supply)} mA"><div class="body"><div class="stripe" style="--fam:var(--accent)"></div><div class="code">${esc(cLabel)}</div></div><div class="ma">${fmt(seg.supply)}</div><div class="meter"><i style="height:100%"></i></div></div>`;
+  let lastRail = -1;
+  a.rows.forEach(r => { if (r.it.bus !== 'box') lastRail = r.i; });
+  let endDrawn = false, prevBox = false;
+  const endcap = () => `<div class="slice endcap" title="End cap"><div class="body"></div></div>`;
+  if (lastRail === -1) { html += endcap(); endDrawn = true; }
+  a.rows.forEach(row => {
+    if (suggAt.has(row.i)) {
+      html += `<div class="slice ghost" title="Suggested ${suggAt.get(row.i)}"><div class="body"><div class="stripe" style="--fam:transparent"></div><div class="code">${suggAt.get(row.i)}</div></div><div class="ma">+2k</div><div class="meter"><i style="height:0"></i></div></div>`;
     }
-    const pct = Math.max(0, Math.min(100, row.left / row.source * 100));
-    const cls = ['slice', row.status, row.feed ? 'feed' : '', selected === row.it.uid ? 'sel' : ''].join(' ');
-    const tip = row.feed ? `${row.it.code}: +${fmt(EL9410_SUPPLY)} mA` : `${row.it.code}: ${fmt(row.it.mA)} mA, ${fmt(row.left)} mA left`;
-    html += `<button type="button" class="${cls}" data-act="select" data-uid="${row.it.uid}" title="${esc(tip)}" aria-label="${esc(tip)}"><div class="body"><div class="stripe" style="--fam:${row.feed ? 'var(--accent)' : famVar(row.it.code)}"></div><div class="code">${esc(row.it.code)}</div></div><div class="ma">${row.feed ? '+2k' : fmt(row.it.mA)}</div><div class="meter"><i style="height:${pct}%"></i></div></button>`;
+    const isBox = row.it.bus === 'box';
+    if (isBox && !prevBox) html += `<div class="cable" aria-hidden="true"></div>`;
+    html += sliceHTML(row, idx);
+    prevBox = isBox;
+    if (row.i === lastRail && !endDrawn) { html += endcap(); endDrawn = true; }
   });
-  html += `<div class="slice endcap" title="End cap"><div class="body"></div></div>`;
-  return `<div class="rail-wrap"><div class="rail">${html}</div></div>`;
+  return `<div class="rail-wrap"><div class="rail" data-rail="${idx}">${html}</div></div>`;
 }
 
 function renderAdvice(seg, a, idx) {
+  if (a.empty) return `<div class="advice st-none"><p>Step 1: pick a bus coupler. Device selection unlocks once the coupler is on the fieldbus.</p></div>`;
   const res = state.reserve;
-  if (a.sugg.length === 0 && a.worst === 'ok') {
-    const head = a.feeds ? `with ${a.feeds} EL9410 in place` : 'on the coupler alone';
-    return `<div class="advice st-ok"><p>This segment runs ${head}. Lowest point: <span class="num">${fmt(a.minLeft)} mA</span> left.</p></div>`;
-  }
   const items = seg.items;
-  const lines = a.sugg.map(s => {
+  if (!a.sugg.length && a.worst === 'ok') {
+    const feeds = items.filter(x => REFRESH[x.code] === x.bus).length;
+    const bits = [];
+    if (a.E) bits.push(`E-bus low point <span class="num">${fmt(a.E.min)} mA</span>`);
+    if (a.K) bits.push(`K-bus low point <span class="num">${fmt(a.K.min)} mA</span>`);
+    return `<div class="advice st-ok"><p>This segment runs ${feeds ? `with ${feeds} refresh terminal${feeds > 1 ? 's' : ''} in place` : 'on the coupler alone'}. ${bits.join(' · ')}.</p></div>`;
+  }
+  const lines = a.issues.map(x => `<li>${esc(x.msg)}</li>`);
+  a.sugg.forEach(s => {
     const prev = items[s.before - 1], next = items[s.before];
-    return `<li>Insert an EL9410 between <strong>#${s.before} ${esc(prev.code)}</strong> and <strong>#${s.before + 1} ${esc(next.code)}</strong>.</li>`;
+    lines.push(`<li>Insert a${s.code === 'EL9410' ? 'n' : ''} ${s.code} between <strong>#${s.before} ${esc(prev.code)}</strong> and <strong>#${s.before + 1} ${esc(next.code)}</strong>.</li>`);
   });
-  a.impossible.forEach(i => lines.push(`<li><strong>#${i + 1} ${esc(items[i].code)}</strong> draws more on its own than one supply can give with ${res} % reserve. Check its value or give it its own segment.</li>`));
-  const cls = a.worst === 'over' ? 'st-over' : a.worst === 'low' ? 'st-low' : 'st-ok';
+  a.impossible.forEach(i => lines.push(`<li><strong>#${i + 1} ${esc(items[i].code)}</strong> draws more on its own than one supply gives with ${res} % reserve. Check its value or give it its own segment.</li>`));
   let lead;
-  if (a.worst === 'over') lead = `This segment needs <span class="num">${fmt(-a.minLeft)} mA</span> more than its supply gives.`;
+  const short = Math.min(a.E ? a.E.min : 0, a.K ? a.K.min : 0);
+  if (a.worst === 'over') lead = `This segment needs <span class="num">${fmt(-short)} mA</span> more than its supply gives.`;
+  else if (a.worst === 'bad') lead = `Some devices can't sit where they are on this rail.`;
   else if (a.worst === 'low') lead = `This segment stays within supply but dips under the ${res} % reserve.`;
   else lead = `This segment is fine as built.`;
-  const fix = a.sugg.length ? `<div class="row"><span>${a.sugg.length === 1 ? 'One EL9410 fixes it' : `${a.sugg.length} EL9410s fix it`}:</span><button type="button" class="btn primary" data-act="apply-sugg" data-seg="${idx}">Insert ${a.sugg.length === 1 ? 'EL9410' : a.sugg.length + ' × EL9410'}</button></div>` : '';
-  return `<div class="advice ${cls}"><p>${lead}</p>${fix}${lines.length ? `<ul>${lines.join('')}</ul>` : ''}</div>`;
+  const n = a.sugg.length, codes = [...new Set(a.sugg.map(s => s.code))].join(' / ');
+  const fix = n ? `<div class="row"><span>${n === 1 ? `One ${codes} fixes the supply` : `${n} refresh terminals fix the supply`}.</span><button type="button" class="btn primary" data-act="apply-sugg" data-seg="${idx}">Insert ${n === 1 ? codes : n + ' × ' + codes}</button></div>` : '';
+  return `<div class="advice st-${a.worst}"><p>${lead}</p>${fix}${lines.length ? `<ul>${lines.join('')}</ul>` : ''}</div>`;
+}
+
+function renderReadout(a, seg) {
+  if (a.empty) return `<div class="readout"><div><span class="label">E-bus draw</span><span class="num">—</span></div><div><span class="label">Supply</span><span class="num">—</span></div><div><span class="label">Lowest point left</span><span class="num">—</span></div><div><span class="label">Used</span><span class="num">—</span></div></div>`;
+  const line = (B, name, refresh) => {
+    const used = B.supply ? Math.round(B.draw / B.supply * 100) : 0;
+    const col = B.min < 0 ? 'var(--over)' : B.min < B.src * state.reserve / 100 ? 'var(--low)' : 'var(--ink)';
+    return `<div class="readout">
+      <div><span class="label">${name} draw</span><span class="num">${fmt(B.draw)}<small>mA</small></span></div>
+      <div><span class="label">Supply incl. ${refresh}</span><span class="num">${fmt(B.supply)}<small>mA</small></span></div>
+      <div><span class="label">Lowest point left</span><span class="num" style="color:${col}">${fmt(B.min)}<small>mA</small></span></div>
+      <div><span class="label">Used</span><span class="num">${used}<small>%</small></span></div>
+    </div>`;
+  };
+  return (a.E ? line(a.E, 'E-bus', 'EL9410') : '') + (a.K ? line(a.K, 'K-bus', 'KL9400') : '');
 }
 
 function renderTable(seg, a, idx) {
-  const suggAt = new Set(a.sugg.map(s => s.before));
-  const n = seg.items.length;
-  const body = a.rows.map((row, i) => {
-    const it = row.it, c = CAT[it.code];
-    const ghost = suggAt.has(i) ? `<tr class="ghost-row"><td></td><td colspan="5">Suggested EL9410 here (+${fmt(EL9410_SUPPLY)} mA)</td></tr>` : '';
-    const drawCell = row.feed
-      ? `<span class="num" style="color:var(--accent)">+${fmt(EL9410_SUPPLY)}</span>`
-      : `<input type="number" id="ma-${it.uid}" min="0" max="5000" step="5" value="${it.mA}" data-act="ma" data-seg="${idx}" data-uid="${it.uid}" aria-label="E-bus draw for ${esc(it.code)} at position ${i + 1}">`;
-    const leftCls = row.status === 'ok' ? '' : row.status;
-    return `${ghost}<tr class="${row.feed ? 'feed-row' : ''} ${selected === it.uid ? 'sel' : ''}" data-uid="${it.uid}">
-      <td class="pos num">${i + 1}</td>
-      <td><span class="term-code" style="--fam:${row.feed ? 'var(--accent)' : famVar(it.code)}"><b></b>${esc(it.code)}${c && c.verify ? '<span class="verify" title="Typical value not confirmed; check the datasheet">verify</span>' : ''}</span></td>
-      <td class="desc">${esc(it.desc)}</td>
+  if (a.empty) return '';
+  const suggAt = new Map(a.sugg.map(s => [s.before, s.code]));
+  const body = a.rows.map(row => {
+    const it = row.it, c = info(it.code);
+    const ghost = suggAt.has(row.i) ? `<tr class="ghost-row"><td></td><td colspan="5">Suggested ${suggAt.get(row.i)} here (+${fmt(REFRESH_MA)} mA)</td></tr>` : '';
+    let drawCell;
+    if (row.feed) drawCell = `<span class="num" style="color:var(--accent)">+${fmt(REFRESH_MA)}</span>`;
+    else if (it.bus === 'box') drawCell = `<span class="num" style="color:var(--muted)">0</span>`;
+    else drawCell = `<input type="number" id="ma-${it.uid}" min="0" max="5000" step="5" value="${it.mA}" data-act="ma" data-seg="${idx}" data-uid="${it.uid}" aria-label="Bus draw for ${esc(it.code)} at position ${row.i + 1}">`;
+    const rowCls = [row.feed ? 'feed-row' : '', row.status === 'bad' ? 'bad-row' : '', selected === it.uid ? 'sel' : ''].join(' ');
+    const leftTxt = row.left == null ? '—' : fmt(row.left);
+    return `${ghost}<tr class="${rowCls}" data-row-uid="${it.uid}">
+      <td class="pos num">${row.i + 1}</td>
+      <td><span class="term-code" style="--fam:${row.feed ? 'var(--accent)' : famVar(it.code)}"><b></b>${esc(it.code)}${c && c.est ? '<span class="verify" title="Estimated value; check the datasheet">verify</span>' : ''}</span></td>
+      <td class="desc">${esc(it.desc)}${row.note ? ` · ${esc(row.note)}` : ''}</td>
+      <td><span class="bus-tag">${BUS_TEXT[it.bus]}</span></td>
       <td class="num">${drawCell}</td>
-      <td class="left-cell ${leftCls}">${fmt(row.left)}</td>
-      <td class="actions">
-        <button type="button" class="icon-btn" data-act="up" data-seg="${idx}" data-uid="${it.uid}" ${i === 0 ? 'disabled' : ''} aria-label="Move ${esc(it.code)} left">↑</button>
-        <button type="button" class="icon-btn" data-act="down" data-seg="${idx}" data-uid="${it.uid}" ${i === n - 1 ? 'disabled' : ''} aria-label="Move ${esc(it.code)} right">↓</button>
-        <button type="button" class="icon-btn" data-act="remove" data-seg="${idx}" data-uid="${it.uid}" aria-label="Remove ${esc(it.code)}">×</button>
-      </td></tr>`;
+      <td class="left-cell ${row.status === 'ok' ? '' : row.status}">${leftTxt}</td></tr>`;
   }).join('');
-  return `<div class="table-wrap"><table>
-    <thead><tr><th class="pos">#</th><th>Terminal</th><th>Function</th><th class="num">Draw mA</th><th class="num">E-bus left mA</th><th class="actions"><span class="label" style="font-size:11px">Order</span></th></tr></thead>
-    <tbody>${body || `<tr class="empty"><td colspan="6">No terminals yet. Add the first one below.</td></tr>`}</tbody></table></div>`;
+  return `<div class="table-wrap"><table class="dev-table">
+    <thead><tr><th class="pos">#</th><th>Device</th><th>Function</th><th>Bus</th><th class="num">Draw mA</th><th class="num">Left mA</th></tr></thead>
+    <tbody>${body || `<tr class="empty"><td colspan="6">No devices yet. Pick one in step 2 and press Add.</td></tr>`}</tbody></table></div>`;
 }
 
 function renderSegment(seg, idx) {
   const a = analyze(seg, state.reserve);
-  const d = drafts[seg.id] || { code: '', mA: '', qty: 1 };
-  const couplerOpts = COUPLERS.map(([code, desc, mA]) => `<option value="${code}" ${seg.coupler === code ? 'selected' : ''}>${code === 'OTHER' ? desc : `${code} — ${desc}`}</option>`).join('');
-  const usedPct = a.supplyTotal ? Math.round(a.draw / a.supplyTotal * 100) : 0;
+  const hasCpl = !!seg.coupler;
+  const cplLocked = hasCpl && !seg.editing;
+  const cplSelected = selected === 'cpl:' + seg.id;
+  const itemSelected = !!seg.items.find(x => x.uid === selected);
+  const cplOpts = (hasCpl ? '' : `<option value="" selected disabled>Select a bus coupler…</option>`) +
+    COUPLERS.map(c => `<option value="${c.code}" ${seg.coupler === c.code ? 'selected' : ''}>${c.code === 'CUSTOM' ? c.desc : `${c.code} · ${c.desc}`} (${fmt(c.supply)} mA ${c.bus}-bus)</option>`).join('');
+  const recent = state.recent;
+  const pick = recent.includes(seg.pick) ? seg.pick : (recent[0] || '');
+  const devOpts = recent.length
+    ? recent.map(code => { const d = info(code); return `<option value="${esc(code)}" ${code === pick ? 'selected' : ''}>${esc(code)}${d ? ' · ' + esc(d.desc) : ''}</option>`; }).join('')
+    : `<option value="">No recent devices. Open the list →</option>`;
+  const nOnRail = seg.items.filter(x => x.bus !== 'box').length, nBox = seg.items.length - nOnRail;
   return `<section class="segment" data-seg="${idx}">
     <div class="seg-head">
       <div class="seg-title">
         <input class="seg-name" type="text" id="name-${seg.id}" value="${esc(seg.name)}" data-act="name" data-seg="${idx}" aria-label="Segment name">
         <span class="pill st-${a.worst}">${STATUS_TEXT[a.worst]}</span>
       </div>
-      <div class="seg-config">
-        <div class="field"><label class="label" for="cpl-${seg.id}">Coupler</label><select id="cpl-${seg.id}" data-act="coupler" data-seg="${idx}">${couplerOpts}</select></div>
-        <div class="field"><label class="label" for="sup-${seg.id}">E-bus supply mA</label><input type="number" id="sup-${seg.id}" min="0" step="50" value="${seg.supply}" data-act="supply" data-seg="${idx}"></div>
+      <div class="seg-meta">
+        <span>${nOnRail} on rail${nBox ? ` · ${nBox} box${nBox > 1 ? 'es' : ''}` : ''}</span>
+        <label for="sup-${seg.id}">Coupler supply</label>
+        <input type="number" id="sup-${seg.id}" min="0" step="50" value="${hasCpl ? seg.supply : ''}" data-act="supply" data-seg="${idx}" ${hasCpl ? '' : 'disabled'} aria-label="Coupler supply in mA">
+        <span>mA</span>
       </div>
     </div>
-    <div class="readout">
-      <div><span class="label">Total draw</span><span class="num">${fmt(a.draw)}<small>mA</small></span></div>
-      <div><span class="label">Supply incl. EL9410</span><span class="num">${fmt(a.supplyTotal)}<small>mA</small></span></div>
-      <div><span class="label">Lowest point left</span><span class="num" style="color:var(--${a.worst === 'ok' ? 'ink' : a.worst})">${fmt(a.minLeft)}<small>mA</small></span></div>
-      <div><span class="label">Terminals · used</span><span class="num">${seg.items.filter(i => !isSupply(i)).length}<small>· ${usedPct} %</small></span></div>
+    <div class="controls">
+      <div class="ctl-group ${cplLocked ? 'off' : ''}">
+        <span class="step">1</span>
+        <div class="field grow"><label class="label" for="cpl-${seg.id}">Bus coupler</label>
+          <select id="cpl-${seg.id}" data-act="coupler" data-seg="${idx}" ${cplLocked ? 'disabled' : ''}>${cplOpts}</select></div>
+        <button type="button" class="btn" data-act="change" data-seg="${idx}" ${seg.editing || cplSelected ? '' : 'disabled'} title="${hasCpl ? 'Select the coupler on the fieldbus, then press Change' : ''}">${seg.editing ? 'Cancel' : 'Change'}</button>
+      </div>
+      <div class="ctl-group ${hasCpl ? '' : 'off'}">
+        <span class="step">2</span>
+        <div class="field grow"><label class="label" for="pick-${seg.id}">Device</label>
+          <select id="pick-${seg.id}" data-act="pick" data-seg="${idx}" ${hasCpl && recent.length ? '' : 'disabled'}>${devOpts}</select></div>
+        <button type="button" class="btn list-btn" data-act="open-list" data-seg="${idx}" ${hasCpl ? '' : 'disabled'} aria-label="Open the full device list">${LIST_ICON}List</button>
+        <button type="button" class="btn primary" data-act="add" data-seg="${idx}" ${hasCpl && pick ? '' : 'disabled'}>Add</button>
+        <button type="button" class="btn danger" data-act="remove" data-seg="${idx}" ${itemSelected ? '' : 'disabled'}>Remove</button>
+      </div>
     </div>
-    ${renderRail(seg, a)}
-    <div class="rail-legend">
-      <span><b style="background:var(--fam-1)"></b>EL1 inputs</span><span><b style="background:var(--fam-2)"></b>EL2 outputs</span>
-      <span><b style="background:var(--fam-3)"></b>EL3 analog in</span><span><b style="background:var(--fam-4)"></b>EL4 analog out</span>
-      <span><b style="background:var(--fam-5)"></b>EL5 position</span><span><b style="background:var(--fam-6)"></b>EL6 comms</span>
-      <span><b style="background:var(--fam-7)"></b>EL7 motion</span><span><b style="border:2px dashed var(--accent)"></b>Suggested EL9410</span>
-      <span>Bars show E-bus left after each slice.</span>
+    ${renderReadout(a, seg)}
+    <div class="fieldbus">
+      <div class="fb-head"><span class="label">Fieldbus</span><span class="hint">${hasCpl ? 'Click a device to select it. Drag it to change the order. Shift + arrow keys also move it.' : ''}</span></div>
+      ${renderRail(seg, a, idx)}
     </div>
+    ${hasCpl ? `<div class="rail-legend">
+      <span><b style="background:var(--fam-1)"></b>Digital in</span><span><b style="background:var(--fam-2)"></b>Digital out</span>
+      <span><b style="background:var(--fam-3)"></b>Analog in</span><span><b style="background:var(--fam-4)"></b>Analog out</span>
+      <span><b style="background:var(--fam-5)"></b>Position</span><span><b style="background:var(--fam-6)"></b>Comms</span>
+      <span><b style="background:var(--fam-7)"></b>Motion</span><span><b style="background:var(--housing-k);border:1px solid var(--line)"></b>K-bus housing</span>
+      <span><b style="background:var(--box)"></b>EP box</span><span><b style="border:2px dashed var(--accent)"></b>Suggested refresh</span>
+    </div>` : ''}
     ${renderAdvice(seg, a, idx)}
     ${renderTable(seg, a, idx)}
-    <form class="add-row" data-seg="${idx}">
-      <div class="field"><label class="label" for="code-${seg.id}">Terminal</label><input list="catalog" type="text" id="code-${seg.id}" placeholder="EL3204 or any part no." value="${esc(d.code)}" data-act="draft-code" data-seg="${idx}" autocomplete="off"></div>
-      <div class="field"><label class="label" for="ma-in-${seg.id}">Draw mA</label><input class="ma-in" type="number" id="ma-in-${seg.id}" min="0" max="5000" step="5" value="${esc(d.mA)}" data-act="draft-ma" data-seg="${idx}"></div>
-      <div class="field"><label class="label" for="qty-${seg.id}">Qty</label><input class="qty-in" type="number" id="qty-${seg.id}" min="1" max="64" value="${d.qty}" data-act="draft-qty" data-seg="${idx}"></div>
-      <button class="btn primary" type="submit">Add to end</button>
-      <div class="hint" id="hint-${seg.id}">${hintFor(d.code)}</div>
-    </form>
     <div class="seg-foot">
-      <button type="button" class="btn" data-act="clear" data-seg="${idx}">Clear terminals</button>
-      <button type="button" class="btn" data-act="del-seg" data-seg="${idx}">${pendingDelete === seg.id ? 'Click again to delete segment' : 'Delete segment'}</button>
+      <button type="button" class="btn" data-act="clear" data-seg="${idx}" ${seg.items.length ? '' : 'disabled'}>Clear devices</button>
+      <button type="button" class="btn danger" data-act="del-seg" data-seg="${idx}">${pendingDelete === seg.id ? 'Click again to delete segment' : 'Delete segment'}</button>
     </div>
   </section>`;
 }
-function hintFor(code) {
-  const c = CAT[normCode(code)];
-  if (!code) return 'Pick from the list or type any part number. Unknown parts need a draw value.';
-  if (c) return c.code === 'EL9410' ? 'Adds a fresh 2,000 mA for the terminals after it.' : `${esc(c.desc)} · typ. ${c.mA} mA${c.verify ? ' (verify)' : ''}`;
-  return 'Not in the catalog. Enter its E-bus draw from the datasheet.';
-}
-const normCode = s => (s || '').trim().split(/\s+/)[0].toUpperCase();
 
-let pendingDelete = null;
 function render() {
   $('#reserve').value = String(state.reserve);
-  const ae = document.activeElement, focusId = ae && ae.id, selStart = ae && ae.selectionStart;
+  const ae = document.activeElement, focusId = ae && ae.id;
+  const scrolls = [...document.querySelectorAll('.rail-wrap')].map(w => w.scrollLeft);
   $('#segments').innerHTML = state.segments.length ? state.segments.map(renderSegment).join('') :
-    `<div class="segment" style="padding:24px;text-align:center;color:var(--muted)">No segments. Add one to start.</div>`;
-  if (focusId) { const el = document.getElementById(focusId); if (el) { el.focus(); try { if (selStart != null) el.setSelectionRange(selStart, selStart); } catch (e) {} } }
+    `<div class="segment" style="padding:24px;text-align:center;color:var(--muted)">No segments. Press Add segment to start.</div>`;
+  document.querySelectorAll('.rail-wrap').forEach((w, i) => { if (scrolls[i]) w.scrollLeft = scrolls[i]; });
+  if (focusId) { const el = document.getElementById(focusId); if (el && !el.disabled) el.focus({ preventScroll: true }); }
+  if (selected && !selected.startsWith('cpl:')) {
+    const el = document.querySelector(`.slice[data-uid="${selected}"]`);
+    if (el && focusAfterRender) el.focus({ preventScroll: true });
+  }
+  focusAfterRender = false;
   save();
 }
+let focusAfterRender = false;
 
-// ---------- actions ----------
-function seg(i) { return state.segments[+i]; }
-function moveItem(s, uidv, dir) {
-  const i = s.items.findIndex(x => x.uid === uidv), j = i + dir;
-  if (i < 0 || j < 0 || j >= s.items.length) return;
-  [s.items[i], s.items[j]] = [s.items[j], s.items[i]];
+// ================= actions =================
+const segAt = i => state.segments[+i];
+function lastOpenSlot(seg, code) {
+  const bus = info(code) ? info(code).bus : busOf(code);
+  if (bus === 'box') return seg.items.length;
+  // On-rail devices go after the last rail device, ahead of an EK1110 and any EP boxes.
+  let i = seg.items.length;
+  while (i > 0 && (seg.items[i - 1].bus === 'box' || (seg.items[i - 1].code === 'EK1110' && code !== 'EK1110'))) i--;
+  return i;
+}
+function moveTo(seg, from, to) {
+  if (from === to || from < 0) return;
+  const [it] = seg.items.splice(from, 1);
+  seg.items.splice(to > from ? to - 1 : to, 0, it);
 }
 document.addEventListener('click', e => {
-  const b = e.target.closest('[data-act]');
-  if (!b || b.tagName === 'INPUT' || b.tagName === 'SELECT') return;
-  const s = seg(b.dataset.seg), act = b.dataset.act;
+  const row = e.target.closest('tr[data-row-uid]');
+  if (row && !e.target.closest('input')) { selected = selected === row.dataset.rowUid ? null : row.dataset.rowUid; render(); return; }
+  const b = e.target.closest('button[data-act]');
+  if (!b) return;
+  const seg = segAt(b.dataset.seg), act = b.dataset.act;
   if (act !== 'del-seg') pendingDelete = null;
-  if (act === 'select') { selected = selected === b.dataset.uid ? null : b.dataset.uid; render(); const row = document.querySelector(`tr[data-uid="${selected}"]`); if (row) row.scrollIntoView({ block: 'nearest' }); return; }
-  if (act === 'up') moveItem(s, b.dataset.uid, -1);
-  if (act === 'down') moveItem(s, b.dataset.uid, 1);
-  if (act === 'remove') s.items = s.items.filter(x => x.uid !== b.dataset.uid);
-  if (act === 'clear') s.items = [];
-  if (act === 'apply-sugg') {
-    const a = analyze(s, state.reserve);
-    a.sugg.map(x => x.before).sort((p, q) => q - p).forEach(i => s.items.splice(i, 0, item('EL9410')));
-    toast(`Inserted ${a.sugg.length} × EL9410`);
-  }
-  if (act === 'del-seg') {
-    const id = state.segments[+b.dataset.seg].id;
-    if (pendingDelete === id) { state.segments.splice(+b.dataset.seg, 1); pendingDelete = null; toast('Segment deleted'); }
-    else pendingDelete = id;
+  switch (act) {
+    case 'change':
+      seg.editing = !seg.editing;
+      if (!seg.editing) selected = null;
+      render();
+      if (seg.editing) document.getElementById('cpl-' + seg.id).focus();
+      return;
+    case 'open-list': openModal(+b.dataset.seg); return;
+    case 'add': {
+      const code = document.getElementById('pick-' + seg.id).value;
+      if (!code) return;
+      const at = lastOpenSlot(seg, code);
+      const it = makeItem(code);
+      seg.items.splice(at, 0, it);
+      pushRecent(code); seg.pick = code;
+      toast(`Added ${code} at position ${at + 1}`);
+      break;
+    }
+    case 'remove': {
+      const i = seg.items.findIndex(x => x.uid === selected);
+      if (i >= 0) { toast(`Removed ${seg.items[i].code}`); seg.items.splice(i, 1); selected = null; }
+      break;
+    }
+    case 'clear': seg.items = []; selected = null; break;
+    case 'apply-sugg': {
+      const a = analyze(seg, state.reserve);
+      [...a.sugg].sort((p, q) => q.before - p.before).forEach(s => seg.items.splice(s.before, 0, makeItem(s.code)));
+      toast(`Inserted ${a.sugg.length} refresh terminal${a.sugg.length > 1 ? 's' : ''}`);
+      break;
+    }
+    case 'del-seg':
+      if (pendingDelete === seg.id) { state.segments.splice(+b.dataset.seg, 1); pendingDelete = null; toast('Segment deleted'); }
+      else pendingDelete = seg.id;
+      break;
+    default: return;
   }
   render();
 });
 document.addEventListener('change', e => {
   const t = e.target, act = t.dataset && t.dataset.act; if (!act) return;
-  const s = seg(t.dataset.seg);
-  if (act === 'ma') { const it = s.items.find(x => x.uid === t.dataset.uid); it.mA = Math.max(0, +t.value || 0); }
-  if (act === 'supply') s.supply = Math.max(0, +t.value || 0);
-  if (act === 'coupler') { s.coupler = t.value; const c = COUPLERS.find(x => x[0] === t.value); if (c) s.supply = c[2]; }
-  if (act === 'name') s.name = t.value.trim() || 'Segment';
-  if (act.startsWith('draft')) return;
-  render();
-});
-document.addEventListener('input', e => {
-  const t = e.target, act = t.dataset && t.dataset.act; if (!act || !act.startsWith('draft')) return;
-  const s = seg(t.dataset.seg); const d = drafts[s.id] || (drafts[s.id] = { code: '', mA: '', qty: 1 });
-  if (act === 'draft-code') {
-    d.code = t.value;
-    const c = CAT[normCode(t.value)];
-    const maIn = document.getElementById('ma-in-' + s.id);
-    if (c) { d.mA = c.mA; maIn.value = c.mA; }
-    document.getElementById('hint-' + s.id).innerHTML = hintFor(t.value);
+  const seg = segAt(t.dataset.seg);
+  if (act === 'ma') { const it = seg.items.find(x => x.uid === t.dataset.uid); if (it) it.mA = Math.max(0, +t.value || 0); }
+  else if (act === 'supply') seg.supply = Math.max(0, +t.value || 0);
+  else if (act === 'coupler') {
+    const c = CPL[t.value]; if (!c) return;
+    const first = !seg.coupler;
+    seg.coupler = c.code; seg.supply = c.supply; seg.editing = false; selected = null;
+    toast(first ? `${c.code === 'CUSTOM' ? 'Coupler' : c.code} placed on the fieldbus` : `Coupler changed to ${c.code === 'CUSTOM' ? 'custom' : c.code}`);
   }
-  if (act === 'draft-ma') d.mA = t.value;
-  if (act === 'draft-qty') d.qty = t.value;
-});
-document.addEventListener('submit', e => {
-  const f = e.target.closest('form.add-row'); if (!f) return;
-  e.preventDefault();
-  const s = seg(f.dataset.seg);
-  const code = normCode(document.getElementById('code-' + s.id).value);
-  const maRaw = document.getElementById('ma-in-' + s.id).value;
-  const qty = Math.max(1, Math.min(64, parseInt(document.getElementById('qty-' + s.id).value, 10) || 1));
-  const hint = document.getElementById('hint-' + s.id);
-  if (!code) { hint.textContent = 'Enter a terminal part number first.'; return; }
-  const c = CAT[code];
-  if (!c && maRaw === '') { hint.textContent = `${code} is not in the catalog. Enter its E-bus draw in mA, then add it.`; document.getElementById('ma-in-' + s.id).focus(); return; }
-  const mA = code === 'EL9410' ? 0 : Math.max(0, +maRaw || 0);
-  for (let k = 0; k < qty; k++) { const it = item(code, mA); if (!c) it.desc = 'Custom terminal'; s.items.push(it); }
-  drafts[s.id] = { code: '', mA: '', qty: 1 };
+  else if (act === 'pick') { seg.pick = t.value; }
+  else if (act === 'name') seg.name = t.value.trim() || 'Segment';
+  else return;
   render();
-  document.getElementById('code-' + s.id).focus();
 });
+
+// ----- fieldbus: select, drag to reorder, keyboard -----
+let drag = null;
+document.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  const cpl = e.target.closest('.slice[data-cpl]');
+  if (cpl) { const seg = segAt(cpl.dataset.cpl); selected = selected === 'cpl:' + seg.id ? null : 'cpl:' + seg.id; render(); return; }
+  const s = e.target.closest('.slice[data-drag]');
+  if (!s) return;
+  e.preventDefault();
+  drag = { el: s, seg: +s.dataset.seg, uid: s.dataset.uid, from: +s.dataset.idx, x0: e.clientX, active: false, to: null, pid: e.pointerId };
+  try { s.setPointerCapture(e.pointerId); } catch (err) {}
+});
+document.addEventListener('pointermove', e => {
+  if (!drag || e.pointerId !== drag.pid) return;
+  const dx = e.clientX - drag.x0;
+  if (!drag.active && Math.abs(dx) < 6) return;
+  const rail = drag.el.closest('.rail'), wrap = rail.parentElement;
+  if (!drag.active) {
+    drag.active = true; drag.el.classList.add('dragging');
+    drag.marker = document.createElement('div'); drag.marker.className = 'drop-marker'; rail.appendChild(drag.marker);
+    drag.scroll0 = wrap.scrollLeft;
+  }
+  const wr = wrap.getBoundingClientRect();
+  if (e.clientX > wr.right - 30) wrap.scrollLeft += 12; else if (e.clientX < wr.left + 30) wrap.scrollLeft -= 12;
+  drag.el.style.transform = `translateX(${dx + (wrap.scrollLeft - drag.scroll0)}px)`;
+  const others = [...rail.querySelectorAll('.slice[data-drag]')].filter(x => x !== drag.el);
+  let to = others.length, markX = null;
+  const rr = rail.getBoundingClientRect();
+  for (let k = 0; k < others.length; k++) {
+    const r = others[k].getBoundingClientRect();
+    if (e.clientX < r.left + r.width / 2) { to = +others[k].dataset.idx; markX = r.left - rr.left - 2; break; }
+  }
+  if (markX === null) {
+    const last = others[others.length - 1];
+    if (last) { const r = last.getBoundingClientRect(); markX = r.right - rr.left; to = +last.dataset.idx + 1; } else { markX = 0; to = 0; }
+  }
+  drag.to = to;
+  drag.marker.style.left = markX + 'px';
+});
+function endDrag(e, cancelled) {
+  if (!drag || (e && e.pointerId !== drag.pid)) return;
+  const d = drag; drag = null;
+  if (d.marker) d.marker.remove();
+  if (!d.active) { selected = selected === d.uid ? null : d.uid; focusAfterRender = true; render(); return; }
+  d.el.classList.remove('dragging'); d.el.style.transform = '';
+  if (!cancelled && d.to != null) {
+    const seg = segAt(d.seg);
+    moveTo(seg, d.from, d.to);
+    selected = d.uid;
+  }
+  render();
+}
+document.addEventListener('pointerup', e => endDrag(e, false));
+document.addEventListener('pointercancel', e => endDrag(e, true));
+document.addEventListener('keydown', e => {
+  if (!$('#modal').hidden) return;
+  const cpl = e.target.closest && e.target.closest('.slice[data-cpl]');
+  if (cpl && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); const seg = segAt(cpl.dataset.cpl); selected = selected === 'cpl:' + seg.id ? null : 'cpl:' + seg.id; render(); return; }
+  const s = e.target.closest && e.target.closest('.slice[data-drag]');
+  if (!s) return;
+  const seg = segAt(s.dataset.seg), i = +s.dataset.idx;
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selected = selected === s.dataset.uid ? null : s.dataset.uid; focusAfterRender = true; render(); }
+  else if (e.shiftKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+    e.preventDefault();
+    const j = e.key === 'ArrowLeft' ? i - 1 : i + 1;
+    if (j < 0 || j >= seg.items.length) return;
+    [seg.items[i], seg.items[j]] = [seg.items[j], seg.items[i]];
+    selected = s.dataset.uid; focusAfterRender = true; render();
+  } else if (e.key === 'Delete' || e.key === 'Backspace') {
+    e.preventDefault(); toast(`Removed ${seg.items[i].code}`); seg.items.splice(i, 1); selected = null; render();
+  }
+});
+
+// ----- device list window -----
+const modal = { seg: null, bus: 'all', func: 'all', q: '', hl: null, list: [] };
+function allDevices() { return [...CATALOG, ...Object.values(state.custom)]; }
+function filterDevices() {
+  const toks = modal.q.toLowerCase().split(/\s+/).filter(Boolean);
+  let list = allDevices().filter(d => {
+    if (modal.bus === 'sys') { if (d.func !== 9) return false; }
+    else if (modal.bus !== 'all' && d.bus !== modal.bus) return false;
+    if (modal.func !== 'all' && d.func !== +modal.func) return false;
+    const hay = (d.code + ' ' + d.desc).toLowerCase();
+    return toks.every(t => hay.includes(t));
+  });
+  if (toks.length) {
+    const q = toks[0];
+    const rank = d => d.code.toLowerCase().startsWith(q) ? 0 : d.code.toLowerCase().includes(q) ? 1 : 2;
+    list.sort((a, b) => rank(a) - rank(b) || a.code.localeCompare(b.code));
+  }
+  return list;
+}
+const MAX_ROWS = 300;
+function renderModal() {
+  const list = filterDevices();
+  modal.list = list.slice(0, MAX_ROWS);
+  if (modal.hl && !modal.list.find(d => d.code === modal.hl)) modal.hl = null;
+  $('#m-results').innerHTML = modal.list.length ? `<table><thead><tr><th>Part</th><th>Function</th><th>Bus</th><th class="num">Draw mA</th></tr></thead><tbody>${
+    modal.list.map(d => `<tr data-code="${esc(d.code)}" class="${modal.hl === d.code ? 'hl' : ''}" aria-selected="${modal.hl === d.code}">
+      <td><span class="term-code" style="--fam:${famVar(d.code)}"><b></b>${esc(d.code)}</span></td>
+      <td class="desc">${esc(d.desc)}${d.est ? '<span class="verify">verify</span>' : ''}</td>
+      <td><span class="bus-tag">${d.bus === 'box' ? 'EP box' : BUS_TEXT[d.bus]}</span></td>
+      <td class="num">${REFRESH[d.code] ? '+2000' : d.bus === 'box' ? '—' : d.mA}</td></tr>`).join('')
+  }</tbody></table>` : `<p style="padding:20px 18px;color:var(--muted);margin:0">No devices match. Try fewer words, another family, or add the part by hand below.</p>`;
+  $('#m-count').textContent = list.length > MAX_ROWS ? `Showing ${MAX_ROWS} of ${list.length} devices. Refine the search to see the rest.` : `${list.length} device${list.length === 1 ? '' : 's'}`;
+  document.querySelectorAll('#m-bus .chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.bus === modal.bus)));
+  const d = modal.hl && info(modal.hl);
+  $('#m-picked').innerHTML = d ? `<strong>${esc(d.code)}</strong> · ${esc(d.desc)}` : 'Pick a device from the list.';
+  $('#m-select').disabled = !d;
+}
+function openModal(segIdx) {
+  modal.seg = segIdx; modal.hl = null;
+  $('#modal').hidden = false;
+  renderModal();
+  const s = $('#m-search'); s.focus(); s.select();
+}
+function closeModal() {
+  $('#modal').hidden = true;
+  const seg = segAt(modal.seg);
+  if (seg) { const b = document.querySelector(`button[data-act="open-list"][data-seg="${modal.seg}"]`); if (b) b.focus(); }
+}
+function chooseDevice(code) {
+  const seg = segAt(modal.seg); if (!seg) return closeModal();
+  pushRecent(code); seg.pick = code;
+  closeModal(); render();
+  const add = document.querySelector(`button[data-act="add"][data-seg="${modal.seg}"]`); if (add) add.focus();
+  toast(`${code} is ready in the Device list. Press Add to place it.`);
+}
+$('#m-search').addEventListener('input', e => { modal.q = e.target.value; renderModal(); });
+$('#m-func').addEventListener('change', e => { modal.func = e.target.value; renderModal(); });
+$('#m-bus').addEventListener('click', e => { const c = e.target.closest('.chip'); if (!c) return; modal.bus = c.dataset.bus; renderModal(); });
+$('#m-results').addEventListener('click', e => { const tr = e.target.closest('tr[data-code]'); if (!tr) return; modal.hl = tr.dataset.code; renderModal(); });
+$('#m-results').addEventListener('dblclick', e => { const tr = e.target.closest('tr[data-code]'); if (tr) chooseDevice(tr.dataset.code); });
+$('#m-select').addEventListener('click', () => { if (modal.hl) chooseDevice(modal.hl); });
+$('#m-cancel').addEventListener('click', closeModal);
+$('#m-close').addEventListener('click', closeModal);
+$('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+$('#modal').addEventListener('keydown', e => {
+  if (e.key === 'Escape') { e.preventDefault(); closeModal(); return; }
+  if (e.target.id === 'm-search' && (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter')) {
+    e.preventDefault();
+    if (e.key === 'Enter') { if (modal.hl) chooseDevice(modal.hl); else if (modal.list.length === 1) chooseDevice(modal.list[0].code); return; }
+    const i = modal.list.findIndex(d => d.code === modal.hl);
+    const j = e.key === 'ArrowDown' ? Math.min(modal.list.length - 1, i + 1) : Math.max(0, i - 1);
+    if (modal.list[j]) { modal.hl = modal.list[j].code; renderModal(); const tr = document.querySelector(`#m-results tr[data-code="${CSS.escape(modal.hl)}"]`); if (tr) tr.scrollIntoView({ block: 'nearest' }); }
+  }
+  if (e.key === 'Tab') { // keep focus inside the window
+    const f = [...$('#modal').querySelectorAll('button:not(:disabled), input, select, summary')].filter(x => x.offsetParent !== null);
+    if (!f.length) return;
+    if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+    else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+  }
+});
+$('#c-use').addEventListener('click', () => {
+  const code = $('#c-code').value.trim().toUpperCase();
+  if (!code) { $('#c-code').focus(); toast('Enter a part number first'); return; }
+  if (!CAT[code]) {
+    const bus = $('#c-bus').value;
+    state.custom[code] = { code, desc: 'Custom device', mA: bus === 'box' ? 0 : Math.max(0, +$('#c-ma').value || 0), est: false, bus, func: funcOf(code) };
+  }
+  $('#c-code').value = '';
+  chooseDevice(code);
+});
+
+// ----- toolbar -----
 $('#reserve').addEventListener('change', e => { state.reserve = +e.target.value; render(); });
 $('#add-seg').addEventListener('click', () => {
-  state.segments.push({ id: uid(), name: `Segment ${state.segments.length + 1}`, coupler: 'EK1100', supply: 2000, items: [] });
+  state.segments.push({ id: uid(), name: `Segment ${state.segments.length + 1}`, coupler: null, supply: 0, editing: false, pick: '', items: [] });
   render();
   const last = state.segments[state.segments.length - 1];
-  const el = document.getElementById('code-' + last.id); if (el) { el.scrollIntoView({ block: 'center' }); el.focus(); }
+  const el = document.getElementById('cpl-' + last.id); if (el) { el.scrollIntoView({ block: 'center' }); el.focus(); }
 });
 let exampleArmed = false;
 $('#load-example').addEventListener('click', e => {
@@ -572,25 +1419,26 @@ $('#copy-bom').addEventListener('click', async () => {
   const lines = [];
   state.segments.forEach(s => {
     const a = analyze(s, state.reserve);
-    lines.push(`${s.name} — ${s.coupler === 'OTHER' ? 'custom supply' : s.coupler} (${fmt(s.supply)} mA)`);
+    lines.push(`${s.name}: ${s.coupler ? (s.coupler === 'CUSTOM' ? 'custom coupler' : s.coupler) + ` (${fmt(s.supply)} mA)` : 'no coupler'}`);
     const counts = new Map();
     s.items.forEach(it => counts.set(it.code, (counts.get(it.code) || 0) + 1));
     counts.forEach((n, code) => lines.push(`  ${n} × ${code}`));
-    lines.push(`  Draw ${fmt(a.draw)} mA of ${fmt(a.supplyTotal)} mA · ${STATUS_TEXT[a.worst]}${a.sugg.length ? ` · needs ${a.sugg.length} more EL9410` : ''}`);
+    if (a.E) lines.push(`  E-bus ${fmt(a.E.draw)} of ${fmt(a.E.supply)} mA`);
+    if (a.K) lines.push(`  K-bus ${fmt(a.K.draw)} of ${fmt(a.K.supply)} mA`);
+    lines.push(`  ${STATUS_TEXT[a.worst]}${a.sugg.length ? ` · needs ${a.sugg.length} more refresh terminal(s)` : ''}`);
     lines.push('');
   });
   const text = lines.join('\n').trim();
   try { await navigator.clipboard.writeText(text); toast('Parts list copied'); }
   catch (err) {
-    const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;left:16px;right:16px;bottom:70px;height:40vh;z-index:5';
-    document.body.appendChild(ta); ta.select(); toast('Select-all is done. Press Ctrl+C, then click away.');
+    const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;left:16px;right:16px;bottom:70px;height:40vh;z-index:25';
+    document.body.appendChild(ta); ta.focus(); ta.select(); toast('Copy blocked here. Press Ctrl+C, then click away.');
     ta.addEventListener('blur', () => ta.remove());
   }
 });
 let toastT;
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600); }
 
-$('#catalog').innerHTML = CATALOG.map(([code, desc, mA]) => `<option value="${code}">${esc(desc)} · ${mA} mA</option>`).join('');
 render();
 </script>
 </body>
