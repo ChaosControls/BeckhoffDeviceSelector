@@ -13,7 +13,7 @@
 
 ## Use
 
-Open `index.html` in any browser. No build step and no server. Your segments are saved in the browser's local storage.
+Open `index.html` in any browser. No build step and no server. `favicon.ico` is the page icon; it also works as a desktop shortcut icon. Your segments are saved in the browser's local storage.
 
 ## Budget rules
 
