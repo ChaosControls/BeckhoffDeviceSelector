@@ -29,7 +29,8 @@
   --over: #b3261e;
   --over-bg: #f8d9d6;
   --scrim: rgba(18, 24, 30, .45);
-  --fam-1: #d9a400; --fam-2: #d8541d; --fam-3: #2f7fc1; --fam-4: #7a4fbf;
+  --fam-1: #c25a00; --fam-2: #8a0b0b; --fam-3: #2f7fc1; --fam-4: #7a4fbf;
+  --safe: #f5c400; --safe-edge: #c99f00; --safe-ink: #111111;
   --fam-5: #1c9a8a; --fam-6: #5d6b78; --fam-7: #b23a74; --fam-9: #3c4650;
   --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
   --font-body: "IBM Plex Sans", system-ui, sans-serif;
@@ -42,7 +43,8 @@
     --box: #0c1014; --box-ink: #d6dde3;
     --ok: #5fd197; --ok-bg: #173628; --low: #f1bd4f; --low-bg: #3a2d10; --over: #ff8a80; --over-bg: #43201d;
     --scrim: rgba(0, 0, 0, .6);
-    --fam-9: #8a96a2; --fam-6: #8794a1;
+    --fam-9: #8a96a2; --fam-6: #8794a1; --fam-1: #d9680f; --fam-2: #b81d1d;
+    --safe: #f2c200; --safe-edge: #a88600; --safe-ink: #111111;
     color-scheme: dark;
   }
 }
@@ -52,7 +54,8 @@
   --box: #0c1014; --box-ink: #d6dde3;
   --ok: #5fd197; --ok-bg: #173628; --low: #f1bd4f; --low-bg: #3a2d10; --over: #ff8a80; --over-bg: #43201d;
   --scrim: rgba(0, 0, 0, .6);
-  --fam-9: #8a96a2; --fam-6: #8794a1;
+  --fam-9: #8a96a2; --fam-6: #8794a1; --fam-1: #d9680f; --fam-2: #b81d1d;
+  --safe: #f2c200; --safe-edge: #a88600; --safe-ink: #111111;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -144,6 +147,9 @@ input[type=number] { font-family: var(--font-mono); }
 .slice.over .body, .slice.bad .body { border-color: var(--over); box-shadow: inset 0 0 0 1px var(--over); }
 .slice.bad .body::after { content: "!"; position: absolute; bottom: 4px; left: 0; right: 0; text-align: center; font-weight: 700; color: var(--over); }
 .slice.kbus .body { background: var(--housing-k); }
+.slice.safe .body { background: var(--safe); border-color: var(--safe-edge); }
+.slice.safe .stripe { background: var(--safe-edge); }
+.slice.safe .code { color: var(--safe-ink); }
 .slice.coupler { width: 58px; }
 .slice.coupler .body { background: var(--surface-2); }
 .slice.coupler .code { font-size: 17px; }
@@ -969,7 +975,8 @@ function analyze(seg, reservePct) {
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const fmt = n => Math.round(n).toLocaleString('en-US');
-const famVar = code => { const f = funcOf(code); return f >= 1 && f <= 7 ? `var(--fam-${f})` : 'var(--fam-9)'; };
+const isSafe = code => { const d = info(code); return !!d && /TwinSAFE/i.test(d.desc); };
+const famVar = code => { if (isSafe(code)) return 'var(--safe)'; const f = funcOf(code); return f >= 1 && f <= 7 ? `var(--fam-${f})` : 'var(--fam-9)'; };
 const STATUS_TEXT = { ok: 'Within supply', low: 'Below reserve', over: 'Over supply', bad: 'Layout problem', none: 'No coupler yet' };
 const BUS_TEXT = { E: 'E-bus', K: 'K-bus', box: 'Cable' };
 const LIST_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3.5h12M2 8h12M2 12.5h12" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>';
@@ -981,7 +988,7 @@ function sliceHTML(row, segIdx) {
     return `<div class="slice box${sel}" role="button" tabindex="0" data-drag="1" data-seg="${segIdx}" data-uid="${it.uid}" data-idx="${row.i}" title="${esc(it.code)}: EtherCAT Box, off-rail" aria-label="${esc(it.code)}, position ${row.i + 1}, EtherCAT Box"><div class="body"><div class="stripe" style="--fam:${famVar(it.code)}"></div><div class="code">${esc(it.code.replace(/-\d+$/, ''))}</div></div><div class="ma">box</div></div>`;
   }
   const pct = row.src ? Math.max(0, Math.min(100, row.left / row.src * 100)) : 0;
-  const cls = ['slice', row.status, row.feed ? 'feed' : '', it.bus === 'K' ? 'kbus' : '', sel].join(' ');
+  const cls = ['slice', row.status, row.feed ? 'feed' : '', it.bus === 'K' ? 'kbus' : '', isSafe(it.code) ? 'safe' : '', sel].join(' ');
   const tip = row.feed ? `${it.code}: +${fmt(REFRESH_MA)} mA` : row.left == null ? `${it.code}: not powered here` : `${it.code}: ${fmt(it.mA)} mA, ${fmt(row.left)} mA left on ${BUS_TEXT[it.bus]}`;
   return `<div class="${cls}" role="button" tabindex="0" data-drag="1" data-seg="${segIdx}" data-uid="${it.uid}" data-idx="${row.i}" title="${esc(tip)}" aria-label="${esc(tip)}, position ${row.i + 1}"><div class="body"><div class="stripe" style="--fam:${row.feed ? 'var(--accent)' : famVar(it.code)}"></div><div class="code">${esc(it.code)}</div></div><div class="ma">${row.feed ? '+2k' : fmt(it.mA)}</div><div class="meter"><i style="height:${pct}%"></i></div></div>`;
 }
@@ -1132,7 +1139,7 @@ function renderSegment(seg, idx) {
       <span><b style="background:var(--fam-1)"></b>Digital in</span><span><b style="background:var(--fam-2)"></b>Digital out</span>
       <span><b style="background:var(--fam-3)"></b>Analog in</span><span><b style="background:var(--fam-4)"></b>Analog out</span>
       <span><b style="background:var(--fam-5)"></b>Position</span><span><b style="background:var(--fam-6)"></b>Comms</span>
-      <span><b style="background:var(--fam-7)"></b>Motion</span><span><b style="background:var(--housing-k);border:1px solid var(--line)"></b>K-bus housing</span>
+      <span><b style="background:var(--fam-7)"></b>Motion</span><span><b style="background:var(--safe);border:1px solid var(--safe-edge)"></b>TwinSAFE</span><span><b style="background:var(--housing-k);border:1px solid var(--line)"></b>K-bus housing</span>
       <span><b style="background:var(--box)"></b>EP box</span><span><b style="border:2px dashed var(--accent)"></b>Suggested refresh</span>
     </div>` : ''}
     ${renderAdvice(seg, a, idx)}
